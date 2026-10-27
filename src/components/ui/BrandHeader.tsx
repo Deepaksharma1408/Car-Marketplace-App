@@ -1,160 +1,287 @@
-﻿import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/context/ThemeContext';
-import { Spacing, Radius } from '@/constants/theme';
 
-interface BrandHeaderProps {
-  activeTab: 'all' | 'listings' | 'reels';
-  onSelectTab: (tab: 'all' | 'listings' | 'reels') => void;
+export type DiscoverTab = 'all' | 'listings' | 'reels';
+
+interface Props {
+  activeTab: DiscoverTab;
+  onSelectTab: (tab: DiscoverTab) => void;
+  immersive?: boolean;
 }
 
-export function BrandHeader({ activeTab, onSelectTab }: BrandHeaderProps) {
+export function BrandHeader({ activeTab, onSelectTab, immersive = false }: Props) {
   const insets = useSafeAreaInsets();
-  const { colors, isDark } = useAppTheme();
+  const { colors } = useAppTheme();
+
+  const tabs: { key: DiscoverTab; label: string }[] = [
+    { key: 'all', label: 'All Feed' },
+    { key: 'listings', label: 'For Sale' },
+    { key: 'reels', label: 'Reels' },
+  ];
+
+  if (immersive) {
+    return (
+      <View style={[styles.immersiveHeader, { paddingTop: insets.top + 8 }]}>
+        <View style={styles.brandRow}>
+          <View style={styles.brandTitleWrap}>
+            <Text style={styles.brandTitle}>
+              VehicleSpot<Text style={{ color: colors.gold }}>.</Text>
+            </Text>
+            <Text style={styles.brandSubtitle}>DUBAI</Text>
+          </View>
+        </View>
+
+        <View style={styles.immersiveTabs}>
+          {tabs.map((tab) => {
+            const isSelected = activeTab === tab.key;
+            return (
+              <Pressable
+                key={tab.key}
+                onPress={() => onSelectTab(tab.key)}
+                accessibilityRole="tab"
+                accessibilityLabel={`${tab.label} feed`}
+                accessibilityState={{ selected: isSelected }}
+                style={({ pressed }) => [
+                  styles.immersiveTabBtn,
+                  {
+                    backgroundColor: isSelected
+                      ? colors.action
+                      : pressed
+                      ? 'rgba(255,255,255,0.25)'
+                      : 'rgba(15, 23, 42, 0.45)',
+                    borderColor: isSelected ? colors.accent : 'rgba(255,255,255,0.18)',
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.immersiveTabText,
+                    {
+                      color: isSelected ? colors.onAccent : '#FFFFFF',
+                      fontWeight: isSelected ? '800' : '600',
+                    },
+                  ]}
+                >
+                  {tab.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <Pressable
+          onPress={() => router.push('/(tabs)/search')}
+          accessibilityRole="button"
+          accessibilityLabel="Open vehicle search"
+          style={({ pressed }) => [
+            styles.immersiveSearchBtn,
+            { backgroundColor: pressed ? 'rgba(0,137,200,0.5)' : 'rgba(15, 23, 42, 0.45)' },
+          ]}
+        >
+          <Ionicons name="search" size={20} color="#FFFFFF" />
+        </Pressable>
+      </View>
+    );
+  }
 
   return (
-    <View style={[styles.headerContainer, { top: Math.max(insets.top, 16) + 8, paddingLeft: Math.max(insets.left, Spacing.four), paddingRight: Math.max(insets.right, Spacing.four) }]}>
-      {/* Brand mark */}
-      <View style={styles.brandRow}>
-        <View style={[styles.brandIconBox, { backgroundColor: colors.accent }]}>
-          <Ionicons name="car-sport" size={16} color={isDark ? '#121214' : '#FFFFFF'} />
+    <View
+      style={{
+        backgroundColor: colors.surface,
+        paddingTop: insets.top,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.borderSubtle,
+      }}
+    >
+      <View style={styles.inner}>
+        <View style={styles.row}>
+          <View style={[styles.mark, { backgroundColor: colors.accent }]}>
+            <Ionicons name="car-sport" size={22} color={colors.onAccent} />
+          </View>
+          <View style={styles.brand}>
+            <Text style={[styles.title, { color: colors.text }]}>
+              VehicleSpot<Text style={{ color: colors.gold }}>.</Text>
+            </Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+              DUBAI · EXCEPTIONAL DRIVES
+            </Text>
+          </View>
+          <Pressable
+            onPress={() => router.push('/(tabs)/search')}
+            accessibilityLabel="Search vehicles"
+            accessibilityRole="button"
+            style={({ pressed }) => [
+              styles.searchBtn,
+              { backgroundColor: pressed ? colors.border : colors.accentLight },
+            ]}
+          >
+            <Ionicons name="search" size={20} color={colors.link} />
+          </Pressable>
         </View>
-        <Text style={styles.brandTitle}>VehicleSpot</Text>
+
+        <View style={styles.tabsRow}>
+          {tabs.map((tab) => {
+            const isSelected = activeTab === tab.key;
+            return (
+              <Pressable
+                key={tab.key}
+                onPress={() => onSelectTab(tab.key)}
+                accessibilityRole="tab"
+                accessibilityLabel={`${tab.label} feed`}
+                accessibilityState={{ selected: isSelected }}
+                style={({ pressed }) => [
+                  styles.tabBtn,
+                  {
+                    backgroundColor: isSelected
+                      ? pressed
+                        ? colors.accentHover
+                        : colors.action
+                      : pressed
+                      ? colors.surfaceElevated
+                      : colors.surfaceElevated,
+                    borderColor: isSelected ? colors.accent : colors.border,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.tabBtnText,
+                    {
+                      color: isSelected ? colors.onAccent : colors.text,
+                      fontWeight: isSelected ? '800' : '600',
+                    },
+                  ]}
+                >
+                  {tab.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
-
-      {/* Feed Filters */}
-      <View style={styles.filterPillsContainer}>
-        <TouchableOpacity
-          onPress={() => onSelectTab('all')}
-          style={[styles.filterPill, activeTab === 'all' && styles.filterPillActive]}
-          accessibilityLabel="For You feed"
-          accessibilityRole="button"
-        >
-          <Text
-            style={[
-              styles.filterPillText,
-              activeTab === 'all' ? styles.filterPillTextActive : styles.filterPillTextInactive,
-            ]}
-          >
-            For You
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => onSelectTab('listings')}
-          style={[styles.filterPill, activeTab === 'listings' && styles.filterPillActive]}
-          accessibilityLabel="For sale listings feed"
-          accessibilityRole="button"
-        >
-          <Text
-            style={[
-              styles.filterPillText,
-              activeTab === 'listings' ? styles.filterPillTextActive : styles.filterPillTextInactive,
-            ]}
-          >
-            For Sale
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => onSelectTab('reels')}
-          style={[styles.filterPill, activeTab === 'reels' && styles.filterPillActive]}
-          accessibilityLabel="Community reels feed"
-          accessibilityRole="button"
-        >
-          <Text
-            style={[
-              styles.filterPillText,
-              activeTab === 'reels' ? styles.filterPillTextActive : styles.filterPillTextInactive,
-            ]}
-          >
-            Reels
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Search shortcut button */}
-      <TouchableOpacity
-        style={styles.searchShortcut}
-        onPress={() => router.push('/(tabs)/search')}
-        accessibilityLabel="Go to search"
-        accessibilityRole="button"
-      >
-        <Ionicons name="search" size={20} color="#FFFFFF" />
-      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  headerContainer: {
+  immersiveHeader: {
     position: 'absolute',
+    top: 0,
     left: 0,
     right: 0,
+    zIndex: 25,
+    elevation: 25,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing.four,
-    zIndex: 30,
+    paddingHorizontal: 16,
+    paddingBottom: 8,
   },
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.two,
   },
-  brandIconBox: {
-    width: 28,
-    height: 28,
-    borderRadius: Radius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
+  brandTitleWrap: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 4,
   },
   brandTitle: {
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '900',
-    letterSpacing: -0.3,
-    textShadowColor: 'rgba(0, 0, 0, 0.7)',
-    textShadowRadius: 6,
+    letterSpacing: -0.4,
+    textShadowColor: 'rgba(0,0,0,0.8)',
+    textShadowRadius: 3,
   },
-  filterPillsContainer: {
+  brandSubtitle: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+  },
+  immersiveTabs: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
-    padding: 3,
-    borderRadius: Radius.full,
+    gap: 6,
+  },
+  immersiveTabBtn: {
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
-  filterPill: {
-    paddingHorizontal: Spacing.three,
-    paddingVertical: 5,
-    borderRadius: Radius.full,
-  },
-  filterPillActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-  },
-  filterPillText: {
+  immersiveTabText: {
     fontSize: 12,
-    fontWeight: '700',
   },
-  filterPillTextActive: {
-    color: '#FFFFFF',
-  },
-  filterPillTextInactive: {
-    color: 'rgba(255, 255, 255, 0.7)',
-  },
-  searchShortcut: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.full,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+  immersiveSearchBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  inner: {
+    width: '100%',
+    maxWidth: 800,
+    alignSelf: 'center',
+    padding: 16,
+    gap: 14,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  mark: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  brand: {
+    flex: 1,
+    minWidth: 0,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: '900',
+    letterSpacing: -0.5,
+  },
+  subtitle: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1.2,
+    marginTop: 2,
+  },
+  searchBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  tabBtn: {
+    flex: 1,
+    minHeight: 40,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+  },
+  tabBtnText: {
+    fontSize: 13,
   },
 });

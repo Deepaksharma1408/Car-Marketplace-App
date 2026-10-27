@@ -1,4 +1,4 @@
-﻿export type ListingType = 'listing' | 'social';
+export type ListingType = 'listing' | 'social';
 export type MediaType = 'video' | 'photo';
 export type SellerType = 'verified_dealer' | 'private_seller' | 'creator';
 
@@ -55,6 +55,7 @@ export interface Vehicle {
   mediaUrls: string[];
   videoDuration?: string;
   isSimulatedVideo?: boolean;
+  videoAsset?: any;
   description: string;
   specs: VehicleSpecs;
   tags: string[];

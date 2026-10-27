@@ -1,10 +1,10 @@
-﻿import React, { useState } from 'react';
+import { TouchableOpacity } from '@/components/ui/Touchable';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   Modal,
   StyleSheet,
-  TouchableOpacity,
   ScrollView,
   Switch,
 } from 'react-native';
@@ -24,7 +24,7 @@ interface FilterModalProps {
 
 export function FilterModal({ visible, onClose, filters, onApply, onReset }: FilterModalProps) {
   const insets = useSafeAreaInsets();
-  const { colors, isDark } = useAppTheme();
+  const { colors } = useAppTheme();
   const [localFilters, setLocalFilters] = useState<SearchFilters>(filters);
 
   const priceRanges: { label: string; value: SearchFilters['priceRange'] }[] = [
@@ -67,7 +67,7 @@ export function FilterModal({ visible, onClose, filters, onApply, onReset }: Fil
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <Modal visible={visible} animationType="slide" transparent onShow={() => setLocalFilters(filters)} onRequestClose={onClose}>
       <View style={styles.overlay}>
         <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
         <View style={[styles.sheetContainer, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
@@ -82,7 +82,7 @@ export function FilterModal({ visible, onClose, filters, onApply, onReset }: Fil
               <Text style={[styles.resetText, { color: colors.textSecondary }]}>Reset All</Text>
             </TouchableOpacity>
             <Text style={[styles.headerTitle, { color: colors.text }]}>Filters</Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+            <TouchableOpacity onPress={onClose} accessibilityLabel="Close filters" accessibilityRole="button" style={styles.closeBtn}>
               <Ionicons name="close" size={20} color={colors.text} />
             </TouchableOpacity>
           </View>
@@ -100,7 +100,7 @@ export function FilterModal({ visible, onClose, filters, onApply, onReset }: Fil
                       style={[
                         styles.chip,
                         {
-                          backgroundColor: active ? colors.accent : colors.surfaceElevated,
+                          backgroundColor: active ? colors.action : colors.surfaceElevated,
                           borderColor: active ? colors.accent : colors.border,
                         },
                       ]}
@@ -109,7 +109,7 @@ export function FilterModal({ visible, onClose, filters, onApply, onReset }: Fil
                       <Text
                         style={[
                           styles.chipText,
-                          { color: active ? (isDark ? '#121214' : '#FFFFFF') : colors.text },
+                          { color: active ? colors.onAccent : colors.text },
                         ]}
                       >
                         {item.label}
@@ -132,7 +132,7 @@ export function FilterModal({ visible, onClose, filters, onApply, onReset }: Fil
                       style={[
                         styles.chip,
                         {
-                          backgroundColor: active ? colors.accent : colors.surfaceElevated,
+                          backgroundColor: active ? colors.action : colors.surfaceElevated,
                           borderColor: active ? colors.accent : colors.border,
                         },
                       ]}
@@ -141,7 +141,7 @@ export function FilterModal({ visible, onClose, filters, onApply, onReset }: Fil
                       <Text
                         style={[
                           styles.chipText,
-                          { color: active ? (isDark ? '#121214' : '#FFFFFF') : colors.text },
+                          { color: active ? colors.onAccent : colors.text },
                         ]}
                       >
                         {item.label}
@@ -164,7 +164,7 @@ export function FilterModal({ visible, onClose, filters, onApply, onReset }: Fil
                       style={[
                         styles.chip,
                         {
-                          backgroundColor: active ? colors.accent : colors.surfaceElevated,
+                          backgroundColor: active ? colors.action : colors.surfaceElevated,
                           borderColor: active ? colors.accent : colors.border,
                         },
                       ]}
@@ -173,7 +173,7 @@ export function FilterModal({ visible, onClose, filters, onApply, onReset }: Fil
                       <Text
                         style={[
                           styles.chipText,
-                          { color: active ? (isDark ? '#121214' : '#FFFFFF') : colors.text },
+                          { color: active ? colors.onAccent : colors.text },
                         ]}
                       >
                         {item.label}
@@ -213,12 +213,12 @@ export function FilterModal({ visible, onClose, filters, onApply, onReset }: Fil
               paddingRight: Math.max(insets.right, Spacing.four),
             }]}>
             <TouchableOpacity
-              style={[styles.applyButton, { backgroundColor: colors.accent }]}
+              style={[styles.applyButton, { backgroundColor: colors.action }]}
               onPress={handleApply}
               accessibilityLabel="Apply filters"
               accessibilityRole="button"
             >
-              <Text style={[styles.applyButtonText, { color: isDark ? '#121214' : '#FFFFFF' }]}>
+              <Text style={[styles.applyButtonText, { color: colors.onAccent }]}>
                 Apply Filters
               </Text>
             </TouchableOpacity>
@@ -236,10 +236,13 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    backgroundColor: 'rgba(15, 23, 42, 0.38)',
   },
   sheetContainer: {
-    maxHeight: '75%',
+    maxHeight: '88%',
+    width: '100%',
+    maxWidth: 640,
+    alignSelf: 'center',
     borderTopLeftRadius: Radius.xl,
     borderTopRightRadius: Radius.xl,
     borderTopWidth: 1,
@@ -270,12 +273,15 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   closeBtn: {
-    width: 32,
-    height: 32,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
   scrollContent: {
+    width: '100%',
+    maxWidth: 800,
+    alignSelf: 'center',
     padding: Spacing.four,
     gap: Spacing.five,
   },
@@ -294,7 +300,7 @@ const styles = StyleSheet.create({
   },
   chip: {
     paddingHorizontal: Spacing.three,
-    paddingVertical: 8,
+    paddingVertical: 12,
     borderRadius: Radius.full,
     borderWidth: 1,
   },

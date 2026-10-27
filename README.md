@@ -1,5 +1,20 @@
 # Welcome to your Expo app 👋
 
+## Laptop preview
+
+Run `npm install`, then `npm run web`. Open the localhost URL printed by Expo
+in your laptop browser. The app currently uses sample vehicle data and local
+storage; publishing listings and real video uploads are not connected to a backend.
+
+## Android APK
+
+The Android package identifier is `com.appic.vehiclespot`.
+Run `npx eas-cli@latest login`, then
+`npx eas-cli@latest build --platform android --profile preview`.
+On the first build, complete the Expo project linking and Android signing prompts.
+The preview profile in `eas.json` produces an installable APK.
+The production profile uses the default store bundle format.
+
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
 ## Get started

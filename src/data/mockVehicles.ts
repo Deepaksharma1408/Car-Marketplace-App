@@ -1,4 +1,5 @@
-﻿import { Vehicle } from '@/types';
+import { Vehicle } from '@/types';
+import { VIDEO_ASSETS } from '@/constants/videoAssets';
 
 export const MOCK_VEHICLES: Vehicle[] = [
   {
@@ -13,7 +14,8 @@ export const MOCK_VEHICLES: Vehicle[] = [
     listingType: 'listing',
     mediaType: 'video',
     videoDuration: '0:28',
-    isSimulatedVideo: true,
+    isSimulatedVideo: false,
+    videoAsset: VIDEO_ASSETS.v1,
     mediaUrls: [
       'https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&w=1200&q=80',
       'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1200&q=80',
@@ -87,7 +89,8 @@ export const MOCK_VEHICLES: Vehicle[] = [
     listingType: 'listing',
     mediaType: 'video',
     videoDuration: '0:35',
-    isSimulatedVideo: true,
+    isSimulatedVideo: false,
+    videoAsset: VIDEO_ASSETS.v2,
     mediaUrls: [
       'https://images.unsplash.com/photo-1520031441872-265e4ff70366?auto=format&fit=crop&w=1200&q=80',
       'https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?auto=format&fit=crop&w=1200&q=80',
@@ -198,7 +201,8 @@ export const MOCK_VEHICLES: Vehicle[] = [
     listingType: 'social',
     mediaType: 'video',
     videoDuration: '0:42',
-    isSimulatedVideo: true,
+    isSimulatedVideo: false,
+    videoAsset: VIDEO_ASSETS.v4,
     mediaUrls: [
       'https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?auto=format&fit=crop&w=1200&q=80',
       'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=1200&q=80',
@@ -258,7 +262,8 @@ export const MOCK_VEHICLES: Vehicle[] = [
     listingType: 'listing',
     mediaType: 'video',
     videoDuration: '0:22',
-    isSimulatedVideo: true,
+    isSimulatedVideo: false,
+    videoAsset: VIDEO_ASSETS.v5,
     mediaUrls: [
       'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=1200&q=80',
       'https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&w=1200&q=80',
@@ -306,9 +311,8 @@ export const MOCK_VEHICLES: Vehicle[] = [
     mileageKm: 4900,
     location: 'Business Bay, Dubai',
     listingType: 'listing',
-    mediaType: 'video',
-    videoDuration: '0:30',
-    isSimulatedVideo: true,
+    mediaType: 'photo',
+    isSimulatedVideo: false,
     mediaUrls: [
       'https://images.unsplash.com/photo-1544829099-b9a0c07fad1a?auto=format&fit=crop&w=1200&q=80',
       'https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=1200&q=80',
@@ -357,7 +361,8 @@ export const MOCK_VEHICLES: Vehicle[] = [
     listingType: 'social',
     mediaType: 'video',
     videoDuration: '0:18',
-    isSimulatedVideo: true,
+    isSimulatedVideo: false,
+    videoAsset: VIDEO_ASSETS.v7,
     mediaUrls: [
       'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=1200&q=80',
       'https://images.unsplash.com/photo-1502877338535-766e1452684a?auto=format&fit=crop&w=1200&q=80',
@@ -451,9 +456,8 @@ export const MOCK_VEHICLES: Vehicle[] = [
     mileageKm: 950,
     location: 'Palm Jumeirah, Dubai',
     listingType: 'listing',
-    mediaType: 'video',
-    videoDuration: '0:38',
-    isSimulatedVideo: true,
+    mediaType: 'photo',
+    isSimulatedVideo: false,
     mediaUrls: [
       'https://images.unsplash.com/photo-1631295868223-63265b40d9e4?auto=format&fit=crop&w=1200&q=80',
       'https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?auto=format&fit=crop&w=1200&q=80',

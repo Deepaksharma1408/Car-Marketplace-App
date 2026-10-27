@@ -1,10 +1,10 @@
-﻿import React, { useState } from 'react';
+import { TouchableOpacity } from '@/components/ui/Touchable';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   Modal,
   StyleSheet,
-  TouchableOpacity,
   FlatList,
   TextInput,
   KeyboardAvoidingView,
@@ -25,7 +25,7 @@ interface CommentsSheetProps {
 
 export function CommentsSheet({ visible, onClose, vehicle }: CommentsSheetProps) {
   const insets = useSafeAreaInsets();
-  const { colors, isDark } = useAppTheme();
+  const { colors } = useAppTheme();
   const [comments, setComments] = useState<Comment[]>(vehicle.sampleComments || [
     {
       id: 'default-1',
@@ -39,6 +39,7 @@ export function CommentsSheet({ visible, onClose, vehicle }: CommentsSheetProps)
     },
   ]);
   const [newComment, setNewComment] = useState('');
+  const [inputFocused, setInputFocused] = useState(false);
 
   const handleAddComment = () => {
     if (!newComment.trim()) return;
@@ -59,7 +60,7 @@ export function CommentsSheet({ visible, onClose, vehicle }: CommentsSheetProps)
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.overlay}
       >
         <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
@@ -131,12 +132,15 @@ export function CommentsSheet({ visible, onClose, vehicle }: CommentsSheetProps)
                 {
                   backgroundColor: colors.surfaceElevated,
                   color: colors.text,
-                  borderColor: colors.border,
+                  borderColor: inputFocused ? colors.accent : colors.border,
                 },
               ]}
+              accessibilityLabel="Comment text"
               placeholder="Add a comment for this vehicle..."
               placeholderTextColor={colors.textMuted}
               value={newComment}
+              onFocus={() => setInputFocused(true)}
+              onBlur={() => setInputFocused(false)}
               onChangeText={setNewComment}
               returnKeyType="send"
               onSubmitEditing={handleAddComment}
@@ -145,7 +149,7 @@ export function CommentsSheet({ visible, onClose, vehicle }: CommentsSheetProps)
               style={[
                 styles.sendButton,
                 {
-                  backgroundColor: newComment.trim() ? colors.accent : colors.surfaceElevated,
+                  backgroundColor: newComment.trim() ? colors.action : colors.surfaceElevated,
                   opacity: newComment.trim() ? 1 : 0.6,
                 },
               ]}
@@ -157,7 +161,7 @@ export function CommentsSheet({ visible, onClose, vehicle }: CommentsSheetProps)
               <Ionicons
                 name="arrow-up"
                 size={18}
-                color={newComment.trim() ? (isDark ? '#121214' : '#FFFFFF') : colors.textMuted}
+                color={newComment.trim() ? colors.onAccent : colors.textMuted}
               />
             </TouchableOpacity>
           </View>
@@ -174,10 +178,13 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    backgroundColor: 'rgba(15, 23, 42, 0.38)',
   },
   sheetContainer: {
-    height: '62%',
+    height: '72%',
+    width: '100%',
+    maxWidth: 640,
+    alignSelf: 'center',
     borderTopLeftRadius: Radius.xl,
     borderTopRightRadius: Radius.xl,
     borderTopWidth: 1,
@@ -205,13 +212,16 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   closeBtn: {
-    width: 32,
-    height: 32,
+    width: 44,
+    height: 44,
     borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
   listContent: {
+    width: '100%',
+    maxWidth: 800,
+    alignSelf: 'center',
     padding: Spacing.four,
     gap: Spacing.four,
   },
@@ -229,6 +239,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   authorRow: {
+    flexWrap: 'wrap',
+    rowGap: 4,
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: Spacing.one,

@@ -1,12 +1,12 @@
-﻿import React, { useState } from 'react';
+import { useBrandDialog } from '@/components/ui/BrandDialog';
+import { TouchableOpacity } from '@/components/ui/Touchable';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   ScrollView,
   StatusBar,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,6 +15,7 @@ import { Spacing, Radius } from '@/constants/theme';
 
 export default function CreateScreen() {
   const insets = useSafeAreaInsets();
+  const { showDialog, dialog } = useBrandDialog();
   const { colors, isDark } = useAppTheme();
   const [createType, setCreateType] = useState<'sell' | 'social'>('sell');
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
@@ -56,7 +57,7 @@ export default function CreateScreen() {
   ];
 
   const handleStartFlow = (title: string) => {
-    Alert.alert(
+    showDialog(
       `${title} Flow`,
       'This interactive path is part of Stage 1 MVP. In this frontend prototype, upload pipelines, video rendering, and camera integrations are cleanly prepared for full native integration.',
       [{ text: 'Understood', style: 'default' }]
@@ -70,13 +71,13 @@ export default function CreateScreen() {
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingTop: Math.max(insets.top, 16) + 14, paddingBottom: insets.bottom + 100 },
+          { paddingTop: Math.max(insets.top, 16) + 14, paddingBottom: 28 },
         ]}
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={[styles.headerPre, { color: colors.accent }]}>VEHICLESPOT STUDIO</Text>
+          <Text style={[styles.headerPre, { color: colors.link }]}>VEHICLESPOT STUDIO</Text>
           <Text style={[styles.headerTitle, { color: colors.text }]}>Create & Publish</Text>
           <Text style={[styles.headerSub, { color: colors.textSecondary }]}>
             Share high-converting vehicle listings or showcase automotive community content across the UAE.
@@ -108,7 +109,7 @@ export default function CreateScreen() {
               style={[
                 styles.typeTabText,
                 {
-                  color: createType === 'sell' ? colors.text : colors.textSecondary,
+                  color: createType === 'sell' ? colors.link : colors.textSecondary,
                   fontWeight: createType === 'sell' ? '700' : '500',
                 },
               ]}
@@ -140,7 +141,7 @@ export default function CreateScreen() {
               style={[
                 styles.typeTabText,
                 {
-                  color: createType === 'social' ? colors.text : colors.textSecondary,
+                  color: createType === 'social' ? colors.link : colors.textSecondary,
                   fontWeight: createType === 'social' ? '700' : '500',
                 },
               ]}
@@ -166,7 +167,7 @@ export default function CreateScreen() {
               {paths.map((p) => {
                 const isExpanded = selectedPath === p.id;
                 return (
-                  <TouchableOpacity
+                  <View
                     key={p.id}
                     style={[
                       styles.pathCard,
@@ -175,22 +176,18 @@ export default function CreateScreen() {
                         borderColor: isExpanded ? colors.accent : colors.border,
                       },
                     ]}
-                    activeOpacity={0.9}
-                    onPress={() => setSelectedPath(isExpanded ? null : p.id)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Listing path ${p.title}`}
                   >
                     {/* Path Header */}
-                    <View style={styles.cardHeader}>
+                    <TouchableOpacity style={styles.cardHeader} onPress={() => setSelectedPath(isExpanded ? null : p.id)} accessibilityRole="button" accessibilityLabel={`Listing path ${p.title}`} accessibilityState={{ selected: isExpanded }}>
                       <View style={styles.cardHeaderLeft}>
                         <View style={[styles.letterBadge, { backgroundColor: colors.accentLight }]}>
-                          <Text style={[styles.letterText, { color: colors.accent }]}>{p.letter}</Text>
+                          <Text style={[styles.letterText, { color: colors.link }]}>{p.letter}</Text>
                         </View>
                         <View style={{ flex: 1 }}>
                           <View style={styles.titleRow}>
                             <Text style={[styles.cardTitle, { color: colors.text }]}>{p.title}</Text>
-                            <View style={[styles.tagBadge, { backgroundColor: colors.surfaceElevated }]}>
-                              <Text style={[styles.tagBadgeText, { color: colors.accent }]}>
+                            <View style={[styles.tagBadge, { backgroundColor: colors.goldLight }]}>
+                              <Text style={[styles.tagBadgeText, { color: colors.goldText }]}>
                                 {p.badge}
                               </Text>
                             </View>
@@ -200,7 +197,7 @@ export default function CreateScreen() {
                           </Text>
                         </View>
                       </View>
-                    </View>
+                    </TouchableOpacity>
 
                     {/* Description */}
                     <Text style={[styles.cardDesc, { color: colors.textSecondary }]}>
@@ -219,10 +216,12 @@ export default function CreateScreen() {
 
                     {/* Start Action */}
                     <TouchableOpacity
+                      accessibilityRole="button"
+                      accessibilityLabel={`Start Path ${p.letter}: ${p.title}`}
                       style={[
                         styles.startPathBtn,
                         {
-                          backgroundColor: isExpanded ? colors.accent : colors.surfaceElevated,
+                          backgroundColor: isExpanded ? colors.action : colors.surfaceElevated,
                         },
                       ]}
                       onPress={() => handleStartFlow(p.title)}
@@ -232,9 +231,7 @@ export default function CreateScreen() {
                           styles.startPathBtnText,
                           {
                             color: isExpanded
-                              ? isDark
-                                ? '#121214'
-                                : '#FFFFFF'
+                              ? colors.onAccent
                               : colors.text,
                           },
                         ]}
@@ -244,10 +241,10 @@ export default function CreateScreen() {
                       <Ionicons
                         name="arrow-forward"
                         size={16}
-                        color={isExpanded ? (isDark ? '#121214' : '#FFFFFF') : colors.text}
+                        color={isExpanded ? colors.onAccent : colors.text}
                       />
                     </TouchableOpacity>
-                  </TouchableOpacity>
+                  </View>
                 );
               })}
             </View>
@@ -285,16 +282,16 @@ export default function CreateScreen() {
             </View>
 
             <TouchableOpacity
-              style={[styles.socialCtaBtn, { backgroundColor: colors.accent }]}
+              style={[styles.socialCtaBtn, { backgroundColor: colors.action }]}
               onPress={() => handleStartFlow('Community Reel')}
             >
               <Ionicons
                 name="videocam"
                 size={18}
-                color={isDark ? '#121214' : '#FFFFFF'}
+                color={colors.onAccent}
                 style={{ marginRight: 8 }}
               />
-              <Text style={[styles.socialCtaText, { color: isDark ? '#121214' : '#FFFFFF' }]}>
+              <Text style={[styles.socialCtaText, { color: colors.onAccent }]}>
                 Select Video from Camera Roll
               </Text>
             </TouchableOpacity>
@@ -312,6 +309,7 @@ export default function CreateScreen() {
           </View>
         </View>
       </ScrollView>
+      {dialog}
     </View>
   );
 }
@@ -321,6 +319,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
+    width: '100%',
+    maxWidth: 800,
+    alignSelf: 'center',
     paddingHorizontal: Spacing.four,
   },
   header: {
@@ -364,6 +365,8 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   typeTabText: {
+    flexShrink: 1,
+    textAlign: 'center',
     fontSize: 14,
   },
   pathsSection: {
@@ -446,10 +449,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   featureText: {
+    flex: 1,
     fontSize: 12,
     fontWeight: '500',
   },
   startPathBtn: {
+    paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -458,6 +463,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   startPathBtnText: {
+    flexShrink: 1,
+    textAlign: 'center',
     fontSize: 13,
     fontWeight: '700',
   },
@@ -511,6 +518,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.full,
   },
   socialCtaText: {
+    flexShrink: 1,
+    textAlign: 'center',
     fontSize: 14,
     fontWeight: '800',
   },

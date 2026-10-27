@@ -1,9 +1,9 @@
-﻿import React from 'react';
+import { TouchableOpacity } from '@/components/ui/Touchable';
+import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   ScrollView,
   StatusBar,
 } from 'react-native';
@@ -32,13 +32,13 @@ export default function AppearanceScreen() {
     {
       id: 'light',
       title: 'Light Theme',
-      description: 'Warm off-white background with refined bronze accents and high contrast text.',
+      description: 'Monaco blue, white surfaces and champagne gold details.',
       icon: 'sunny-outline',
     },
     {
       id: 'dark',
       title: 'Dark Theme',
-      description: 'Deep midnight navy background with restrained champagne gold accents.',
+      description: 'Midnight navy surfaces with Monaco blue and champagne gold details.',
       icon: 'moon-outline',
     },
   ];
@@ -91,7 +91,7 @@ export default function AppearanceScreen() {
                 activeOpacity={0.88}
                 onPress={() => setPreference(opt.id)}
                 accessibilityRole="radio"
-                accessibilityState={{ selected: isSelected }}
+                accessibilityState={{ checked: isSelected }}
                 accessibilityLabel={opt.title}
               >
                 <View style={styles.cardTopRow}>
@@ -133,18 +133,18 @@ export default function AppearanceScreen() {
                 <View style={styles.swatchRow}>
                   {opt.id === 'light' ? (
                     <View style={styles.swatchWrap}>
-                      <View style={[styles.swatch, { backgroundColor: '#F8F6F2' }]} />
+                      <View style={[styles.swatch, { backgroundColor: '#F4F7FB' }]} />
                       <View style={[styles.swatch, { backgroundColor: '#FFFFFF' }]} />
-                      <View style={[styles.swatch, { backgroundColor: '#A87B2E' }]} />
+                      <View style={[styles.swatch, { backgroundColor: '#0089C8' }]} />
                       <Text style={[styles.swatchLabel, { color: colors.textSecondary }]}>
-                        Off-White / Bronze
+                        Monaco / Blue & Gold
                       </Text>
                     </View>
                   ) : opt.id === 'dark' ? (
                     <View style={styles.swatchWrap}>
-                      <View style={[styles.swatch, { backgroundColor: '#0C0D11' }]} />
-                      <View style={[styles.swatch, { backgroundColor: '#151720' }]} />
-                      <View style={[styles.swatch, { backgroundColor: '#DFBE88' }]} />
+                      <View style={[styles.swatch, { backgroundColor: '#0F172A' }]} />
+                      <View style={[styles.swatch, { backgroundColor: '#172438' }]} />
+                      <View style={[styles.swatch, { backgroundColor: '#C49B55' }]} />
                       <Text style={[styles.swatchLabel, { color: colors.textSecondary }]}>
                         Midnight / Champagne
                       </Text>
@@ -171,7 +171,7 @@ export default function AppearanceScreen() {
               Accessibility & Visual Comfort
             </Text>
             <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-              VehicleSpot semantic tokens are engineered with WCAG AA compliant contrast ratios across both light and dark modes, ensuring optimal visibility in direct sunlight and night driving conditions.
+              Clear text, distinct controls, and comfortable spacing help you browse vehicles in both light and dark environments.
             </Text>
           </View>
         </View>
@@ -204,6 +204,9 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   scrollContent: {
+    width: '100%',
+    maxWidth: 800,
+    alignSelf: 'center',
     padding: Spacing.four,
     gap: Spacing.four,
   },

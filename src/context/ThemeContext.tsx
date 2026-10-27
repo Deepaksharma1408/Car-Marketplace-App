@@ -1,4 +1,4 @@
-﻿import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useColorScheme as useDeviceColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors, ThemeColors, AppearancePreference, ThemeMode } from '@/constants/theme';
@@ -18,7 +18,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const deviceColorScheme = useDeviceColorScheme();
-  const [preference, setPreferenceState] = useState<AppearancePreference>('system');
+  const [preference, setPreferenceState] = useState<AppearancePreference>('light');
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {

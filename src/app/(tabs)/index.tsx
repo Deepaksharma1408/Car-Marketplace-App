@@ -1,76 +1,132 @@
-﻿import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   View,
   StyleSheet,
   FlatList,
-  useWindowDimensions,
-  ViewToken,
   StatusBar,
+  AppState,
+  AppStateStatus,
+  ViewToken,
 } from 'react-native';
-import { BrandHeader } from '@/components/ui/BrandHeader';
-import { ReelItem } from '@/components/discover/ReelItem';
+import { useIsFocused } from 'expo-router';
+import { BrandHeader, DiscoverTab } from '@/components/ui/BrandHeader';
+import { ImmersiveReel } from '@/components/discover/ImmersiveReel';
 import { MOCK_VEHICLES } from '@/data/mockVehicles';
-import { useAppTheme } from '@/context/ThemeContext';
+
+const VIEWABILITY_CONFIG = {
+  itemVisiblePercentThreshold: 60,
+};
 
 export default function DiscoverScreen() {
-  const { isDark } = useAppTheme();
-  const { height } = useWindowDimensions();
-  const [activeTab, setActiveTab] = useState<'all' | 'listings' | 'reels'>('all');
-  const [activeIndex, setActiveIndex] = useState(0);
+  const isScreenFocused = useIsFocused();
+  const [activeTab, setActiveTab] = useState<DiscoverTab>('all');
+  const [layoutHeight, setLayoutHeight] = useState(0);
+  const [activeVehicleId, setActiveVehicleId] = useState<string>(MOCK_VEHICLES[0]?.id ?? '');
+  const [isAppActive, setIsAppActive] = useState<boolean>(AppState.currentState === 'active');
+  const [isMuted, setIsMuted] = useState<boolean>(true); // Start muted by default as required
+
+  // AppState listener for pausing on background / resume on foreground
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextState: AppStateStatus) => {
+      setIsAppActive(nextState === 'active');
+    });
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
+  const selectTab = useCallback((tab: DiscoverTab) => {
+    setActiveTab(tab);
+    const nextList = MOCK_VEHICLES.filter((v) => {
+      if (tab === 'all') return true;
+      if (tab === 'listings') return v.listingType === 'listing';
+      if (tab === 'reels') return v.mediaType === 'video';
+      return true;
+    });
+    if (nextList.length > 0) {
+      setActiveVehicleId(nextList[0].id);
+    }
+  }, []);
+
+  const toggleMute = useCallback(() => {
+    setIsMuted((prev) => !prev);
+  }, []);
 
   const filteredVehicles = useMemo(() => {
-    if (activeTab === 'listings') {
-      return MOCK_VEHICLES.filter((v) => v.listingType === 'listing');
-    }
-    if (activeTab === 'reels') {
-      return MOCK_VEHICLES.filter((v) => v.listingType === 'social');
-    }
-    return MOCK_VEHICLES;
+    return MOCK_VEHICLES.filter((v) => {
+      if (activeTab === 'all') return true;
+      if (activeTab === 'listings') return v.listingType === 'listing';
+      if (activeTab === 'reels') return v.mediaType === 'video';
+      return true;
+    });
   }, [activeTab]);
 
-  const onViewableItemsChanged = useRef(
+  // Viewable item tracking for single active playing video
+  const onViewableItemsChanged = useCallback(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
-      if (viewableItems && viewableItems.length > 0 && viewableItems[0].index !== null) {
-        setActiveIndex(viewableItems[0].index);
+      if (viewableItems && viewableItems.length > 0) {
+        const topItem = viewableItems[0];
+        if (topItem.item?.id) {
+          setActiveVehicleId(topItem.item.id);
+        }
       }
-    }
-  ).current;
-
-  const viewabilityConfig = useRef({
-    itemVisiblePercentThreshold: 70,
-  }).current;
+    },
+    []
+  );
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
 
-      {/* Brand Header Overlay */}
-      <BrandHeader activeTab={activeTab} onSelectTab={setActiveTab} />
-
-      {/* Vertical Reels FlatList */}
-      <FlatList
-        data={filteredVehicles}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item, index }) => (
-          <ReelItem
-            vehicle={item}
-            isActive={index === activeIndex}
-            itemHeight={height}
+      {/* Viewport for Vertically Paged Editorial Feed */}
+      <View
+        style={styles.viewport}
+        onLayout={(event) => {
+          const height = event.nativeEvent.layout.height;
+          if (height > 0 && Math.abs(height - layoutHeight) > 1) {
+            setLayoutHeight(height);
+          }
+        }}
+      >
+        {layoutHeight > 0 && (
+          <FlatList
+            key={`feed-${activeTab}-${layoutHeight}`}
+            data={filteredVehicles}
+            keyExtractor={(item) => item.id}
+            pagingEnabled
+            snapToInterval={layoutHeight}
+            decelerationRate="fast"
+            disableIntervalMomentum
+            showsVerticalScrollIndicator={false}
+            bounces={false}
+            initialNumToRender={1}
+            maxToRenderPerBatch={2}
+            windowSize={3}
+            removeClippedSubviews
+            getItemLayout={(_, index) => ({
+              length: layoutHeight,
+              offset: layoutHeight * index,
+              index,
+            })}
+            onViewableItemsChanged={onViewableItemsChanged}
+            viewabilityConfig={VIEWABILITY_CONFIG}
+            renderItem={({ item }) => (
+              <ImmersiveReel
+                vehicle={item}
+                height={layoutHeight}
+                isActive={item.id === activeVehicleId}
+                isScreenFocused={isScreenFocused}
+                isAppActive={isAppActive}
+                isMuted={isMuted}
+                onToggleMute={toggleMute}
+              />
+            )}
           />
         )}
-        pagingEnabled
-        showsVerticalScrollIndicator={false}
-        snapToInterval={height}
-        snapToAlignment="start"
-        decelerationRate="fast"
-        onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={viewabilityConfig}
-        getItemLayout={(_, index) => ({
-          length: height,
-          offset: height * index,
-          index,
-        })}
-      />
+      </View>
+
+      {/* Floating Brand & Filter Header (Rendered on top of viewport) */}
+      <BrandHeader activeTab={activeTab} onSelectTab={selectTab} immersive />
     </View>
   );
 }
@@ -78,6 +134,12 @@ export default function DiscoverScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: '#0F172A',
+  },
+  viewport: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
   },
 });

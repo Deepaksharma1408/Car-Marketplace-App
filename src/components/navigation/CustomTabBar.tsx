@@ -1,255 +1,58 @@
-﻿import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useSaved } from '@/context/SavedContext';
-import { Spacing, Radius } from '@/constants/theme';
+import type { ComponentProps } from 'react';
+import { Tabs } from 'expo-router';
+type BottomTabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>>[0];
 
-export interface CustomTabBarProps {
-  state: {
-    index: number;
-    routes: Array<{
-      key: string;
-      name: string;
-      params?: any;
-    }>;
-  };
-  descriptors: Record<string, { options: any }>;
-  navigation: {
-    emit: (event: any) => any;
-    navigate: (name: string, params?: any) => void;
-  };
-}
+const tabs = {
+  index: { label: 'Discover', icon: 'compass-outline', active: 'compass' },
+  search: { label: 'Search', icon: 'search-outline', active: 'search' },
+  create: { label: 'Create', icon: 'add-circle-outline', active: 'add-circle' },
+  saved: { label: 'Saved', icon: 'bookmark-outline', active: 'bookmark' },
+  profile: { label: 'Profile', icon: 'person-outline', active: 'person' },
+} as const;
 
-export function CustomTabBar({ state, descriptors, navigation }: CustomTabBarProps) {
+export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
-  const { colors, isDark } = useAppTheme();
+  const { colors } = useAppTheme();
   const { savedIds } = useSaved();
-
-  const routes = state.routes;
-
-  const getIcon = (routeName: string, isFocused: boolean) => {
-    switch (routeName) {
-      case 'index':
-        return isFocused ? 'compass' : 'compass-outline';
-      case 'search':
-        return isFocused ? 'search' : 'search-outline';
-      case 'create':
-        return 'add';
-      case 'saved':
-        return isFocused ? 'bookmark' : 'bookmark-outline';
-      case 'profile':
-        return isFocused ? 'person' : 'person-outline';
-      default:
-        return 'ellipse';
-    }
-  };
-
-  const getLabel = (routeName: string) => {
-    switch (routeName) {
-      case 'index':
-        return 'Discover';
-      case 'search':
-        return 'Search';
-      case 'create':
-        return 'Create';
-      case 'saved':
-        return 'Saved';
-      case 'profile':
-        return 'Profile';
-      default:
-        return routeName;
-    }
-  };
-
   return (
-    <View
-      style={[
-        styles.tabBarContainer,
-        {
-          backgroundColor: colors.tabBarBackground,
-          borderTopColor: colors.tabBarBorder,
-          paddingBottom: Math.max(insets.bottom, 12),
-          paddingLeft: Math.max(insets.left, 8),
-          paddingRight: Math.max(insets.right, 8),
-        },
-      ]}
-    >
-      {routes.map((route, index: number) => {
-        const isFocused = state.index === index;
-        const isCreateTab = route.name === 'create';
-
-        const onPress = () => {
-          const event = navigation.emit({
-            type: 'tabPress',
-            target: route.key,
-            canPreventDefault: true,
-          });
-
-          if (!isFocused && !event.defaultPrevented) {
-            navigation.navigate(route.name);
-          }
-        };
-
-        const onLongPress = () => {
-          navigation.emit({
-            type: 'tabLongPress',
-            target: route.key,
-          });
-        };
-
-        if (isCreateTab) {
+    <View style={[styles.bar, { backgroundColor: colors.surface, borderTopColor: colors.border, paddingBottom: Math.max(insets.bottom, 8), paddingLeft: insets.left, paddingRight: insets.right }]}>
+      <View style={styles.inner}>
+        {state.routes.map((route, index) => {
+          const tab = tabs[route.name as keyof typeof tabs];
+          if (!tab) return null;
+          const selected = index === state.index;
+          const color = selected ? colors.accent : colors.textSecondary;
           return (
-            <View key={route.key} style={styles.createTabWrapper}>
-              <TouchableOpacity
-                onPress={onPress}
-                onLongPress={onLongPress}
-                style={[
-                  styles.createButton,
-                  {
-                    backgroundColor: colors.accent,
-                    shadowColor: colors.accent,
-                  },
-                ]}
-                activeOpacity={0.85}
-                accessibilityRole="button"
-                accessibilityLabel="Create listing or post video"
-                accessibilityState={isFocused ? { selected: true } : {}}
-              >
-                <Ionicons
-                  name="add"
-                  size={28}
-                  color={isDark ? '#121214' : '#FFFFFF'}
-                />
-              </TouchableOpacity>
-              <Text
-                style={[
-                  styles.createLabel,
-                  { color: isFocused ? colors.accent : colors.tabInactive },
-                ]}
-              >
-                Create
-              </Text>
-            </View>
+            <Pressable key={route.key} accessibilityRole="tab" accessibilityLabel={tab.label + ' tab'} accessibilityState={{ selected }}
+              onPress={() => {
+                const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+                if (!selected && !event.defaultPrevented) navigation.navigate(route.name, route.params);
+              }}
+              onLongPress={() => navigation.emit({ type: 'tabLongPress', target: route.key })}
+              style={({ pressed }) => [styles.tab, { backgroundColor: pressed ? colors.accentLight : 'transparent' }]}>
+              <View style={[styles.icon, { backgroundColor: selected ? colors.accentLight : 'transparent' }]}>
+                <Ionicons name={selected ? tab.active : tab.icon} size={24} color={color} />
+                {route.name === 'saved' && savedIds.length > 0 && <View style={[styles.badge, { backgroundColor: colors.accent }]}><Text style={[styles.count, { color: colors.onAccent }]}>{savedIds.length}</Text></View>}
+              </View>
+              <Text numberOfLines={1} style={[styles.label, { color: selected ? colors.link : colors.textSecondary, fontWeight: selected ? '700' : '500' }]}>{tab.label}</Text>
+            </Pressable>
           );
-        }
-
-        const iconName = getIcon(route.name, isFocused) as any;
-        const label = getLabel(route.name);
-
-        return (
-          <TouchableOpacity
-            key={route.key}
-            onPress={onPress}
-            onLongPress={onLongPress}
-            style={styles.tabButton}
-            accessibilityRole="button"
-            accessibilityState={isFocused ? { selected: true } : {}}
-            accessibilityLabel={`${label} tab`}
-          >
-            <View style={styles.iconContainer}>
-              <Ionicons
-                name={iconName}
-                size={22}
-                color={isFocused ? colors.accent : colors.tabInactive}
-              />
-              {route.name === 'saved' && savedIds.length > 0 && (
-                <View style={[styles.badge, { backgroundColor: colors.accent }]}>
-                  <Text style={[styles.badgeText, { color: isDark ? '#121214' : '#FFFFFF' }]}>
-                    {savedIds.length}
-                  </Text>
-                </View>
-              )}
-            </View>
-            <Text
-              style={[
-                styles.tabLabel,
-                {
-                  color: isFocused ? colors.accent : colors.tabInactive,
-                  fontWeight: isFocused ? '700' : '500',
-                },
-              ]}
-              numberOfLines={1}
-            >
-              {label}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
+        })}
+      </View>
     </View>
   );
 }
-
 const styles = StyleSheet.create({
-  tabBarContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    borderTopWidth: 1,
-    paddingTop: 8,
-    elevation: 8,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-  },
-  tabButton: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 48,
-  },
-  iconContainer: {
-    position: 'relative',
-    height: 26,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  badge: {
-    position: 'absolute',
-    top: -3,
-    right: -10,
-    minWidth: 16,
-    height: 16,
-    borderRadius: Radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 3,
-  },
-  badgeText: {
-    fontSize: 9,
-    fontWeight: '800',
-  },
-  tabLabel: {
-    fontSize: 10,
-    marginTop: 2,
-    letterSpacing: 0.2,
-  },
-  createTabWrapper: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    top: -12,
-  },
-  createButton: {
-    width: 48,
-    height: 48,
-    borderRadius: Radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  createLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    marginTop: 3,
-  },
+  bar: { borderTopWidth: 1, paddingTop: 8, shadowColor: '#0F172A', shadowOpacity: 0.04, shadowOffset: { width: 0, height: -2 }, shadowRadius: 10, elevation: 4 },
+  inner: { width: '100%', maxWidth: 800, alignSelf: 'center', flexDirection: 'row', paddingHorizontal: 8 },
+  tab: { flex: 1, minWidth: 0, minHeight: 56, alignItems: 'center', justifyContent: 'center', gap: 3, borderRadius: 12 },
+  icon: { width: 48, height: 30, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  label: { fontSize: 11 },
+  badge: { position: 'absolute', right: 0, top: -2, minWidth: 15, height: 15, borderRadius: 8, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3 },
+  count: { fontSize: 9, fontWeight: '700' },
 });

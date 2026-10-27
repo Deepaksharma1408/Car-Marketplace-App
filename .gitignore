@@ -2,6 +2,9 @@
 
 # dependencies
 node_modules/
+.android-tools/
+.android-sdk/
+.android-avd/
 
 # Expo
 .expo/
@@ -41,3 +44,8 @@ example
 # generated native folders
 /ios
 /android
+
+# Screenshots and test artifacts
+*.png
+!assets/**/*.png
+

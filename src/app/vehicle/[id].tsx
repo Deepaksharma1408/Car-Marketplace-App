@@ -1,14 +1,15 @@
-﻿import React, { useState } from 'react';
+import { ListingImage } from '@/components/ui/ListingImage';
+import { useBrandDialog } from '@/components/ui/BrandDialog';
+import { TouchableOpacity } from '@/components/ui/Touchable';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   Share,
   StatusBar,
-  Alert,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,11 +20,15 @@ import { useAppTheme } from '@/context/ThemeContext';
 import { useSaved } from '@/context/SavedContext';
 import { Spacing, Radius } from '@/constants/theme';
 
-const { width } = Dimensions.get('window');
+
 
 export default function VehicleDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
+  const { showDialog, dialog } = useBrandDialog();
+  const { width: windowWidth } = useWindowDimensions();
+  const width = Math.min(windowWidth - insets.left - insets.right, 800);
+  const galleryHeight = Math.min(width * 0.8, 440);
   const { colors, isDark } = useAppTheme();
   const { isSaved, toggleSave } = useSaved();
 
@@ -31,12 +36,13 @@ export default function VehicleDetailScreen() {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   const saved = isSaved(vehicle.id);
+  const forSale = vehicle.listingType === 'listing';
 
   const handleShare = async () => {
     try {
       await Share.share({
         message: `Check out this ${vehicle.title} on VehicleSpot! ${
-          vehicle.priceAED ? `Price: AED ${vehicle.priceAED.toLocaleString()}` : ''
+          forSale && vehicle.priceAED ? `Price: AED ${vehicle.priceAED.toLocaleString()}` : ''
         }`,
       });
     } catch (err) {
@@ -45,7 +51,8 @@ export default function VehicleDetailScreen() {
   };
 
   const handleContactAction = (type: 'whatsapp' | 'call') => {
-    Alert.alert(
+    if (!forSale) return;
+    showDialog(
       `${type === 'whatsapp' ? 'WhatsApp' : 'Call'} Inquiry`,
       `Inquiry for ${vehicle.title} with seller ${vehicle.seller.name}. Contact details: ${
         type === 'whatsapp' ? vehicle.seller.whatsapp : vehicle.seller.phone
@@ -55,51 +62,51 @@ export default function VehicleDetailScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+    <View style={[styles.container, { backgroundColor: colors.background, paddingLeft: insets.left, paddingRight: insets.right }]}>
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors.surface} />
 
       {/* Floating Back & Share Navigation */}
-      <View style={[styles.floatingNav, { top: insets.top + 8 }]}>
+      <View style={[styles.floatingNav, { paddingTop: insets.top + 8, backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity
           onPress={() => router.back()}
-          style={styles.navIconBtn}
+          style={[styles.navIconBtn, { backgroundColor: colors.accentLight, borderColor: colors.border }]}
           accessibilityLabel="Back"
           accessibilityRole="button"
         >
-          <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
+          <Ionicons name="arrow-back" size={20} color={colors.link} />
         </TouchableOpacity>
 
         <View style={styles.navRightButtons}>
           <TouchableOpacity
             onPress={() => toggleSave(vehicle.id)}
-            style={styles.navIconBtn}
+            style={[styles.navIconBtn, { backgroundColor: colors.accentLight, borderColor: colors.border }]}
             accessibilityLabel={saved ? 'Remove from saved' : 'Save vehicle'}
             accessibilityRole="button"
           >
             <Ionicons
               name={saved ? 'bookmark' : 'bookmark-outline'}
               size={20}
-              color={saved ? colors.accent : '#FFFFFF'}
+              color={saved ? colors.accent : colors.textSecondary}
             />
           </TouchableOpacity>
 
           <TouchableOpacity
             onPress={handleShare}
-            style={styles.navIconBtn}
+            style={[styles.navIconBtn, { backgroundColor: colors.accentLight, borderColor: colors.border }]}
             accessibilityLabel="Share vehicle"
             accessibilityRole="button"
           >
-            <Ionicons name="share-outline" size={20} color="#FFFFFF" />
+            <Ionicons name="share-outline" size={20} color={colors.link} />
           </TouchableOpacity>
         </View>
       </View>
 
       <ScrollView
-        contentContainerStyle={{ paddingBottom: insets.bottom + 110 }}
+        contentContainerStyle={{ paddingBottom: 24, width: '100%', maxWidth: 800, alignSelf: 'center' }}
         showsVerticalScrollIndicator={false}
       >
         {/* Media Gallery Banner */}
-        <View style={styles.galleryContainer}>
+        <View style={[styles.galleryContainer, { height: galleryHeight, backgroundColor: colors.surfaceElevated }]}>
           <ScrollView
             horizontal
             pagingEnabled
@@ -111,10 +118,10 @@ export default function VehicleDetailScreen() {
             scrollEventThrottle={16}
           >
             {vehicle.mediaUrls.map((url, idx) => (
-              <Image
+              <ListingImage
                 key={idx}
                 source={{ uri: url }}
-                style={[styles.galleryImage, { width }]}
+                style={[styles.galleryImage, { width, height: galleryHeight }]}
                 contentFit="cover"
               />
             ))}
@@ -142,14 +149,14 @@ export default function VehicleDetailScreen() {
           {/* Listing badge */}
           <View style={[styles.galleryBadge, { backgroundColor: 'rgba(0, 0, 0, 0.65)' }]}>
             <Ionicons
-              name={vehicle.mediaType === 'video' ? 'videocam' : 'camera'}
+              name="images-outline"
               size={12}
               color={colors.accent}
               style={{ marginRight: 4 }}
             />
             <Text style={styles.galleryBadgeText}>
               {vehicle.mediaType === 'video'
-                ? `Video Reel • ${vehicle.videoDuration || '0:30'}`
+                ? `4K Reel + Photo Gallery (${vehicle.mediaUrls.length} shots)`
                 : `Photo Tour (${vehicle.mediaUrls.length} shots)`}
             </Text>
           </View>
@@ -159,7 +166,7 @@ export default function VehicleDetailScreen() {
         <View style={[styles.contentSection, { backgroundColor: colors.surface, borderBottomColor: colors.borderSubtle }]}>
           <View style={styles.tagRow}>
             <View style={[styles.typePill, { backgroundColor: colors.accentLight }]}>
-              <Text style={[styles.typePillText, { color: colors.accent }]}>
+              <Text style={[styles.typePillText, { color: colors.link }]}>
                 {vehicle.listingType === 'listing' ? 'FOR SALE' : 'COMMUNITY SHOWCASE'}
               </Text>
             </View>
@@ -173,13 +180,10 @@ export default function VehicleDetailScreen() {
 
           <Text style={[styles.title, { color: colors.text }]}>{vehicle.title}</Text>
 
-          {vehicle.priceAED && (
+          {forSale && !!vehicle.priceAED && (
             <View style={styles.priceRow}>
-              <Text style={[styles.priceValue, { color: colors.accent }]}>
+              <Text style={[styles.priceValue, { color: colors.link }]}>
                 AED {vehicle.priceAED.toLocaleString()}
-              </Text>
-              <Text style={[styles.vatText, { color: colors.textSecondary }]}>
-                Est. AED {Math.round(vehicle.priceAED * 0.018).toLocaleString()} / mo*
               </Text>
             </View>
           )}
@@ -257,12 +261,12 @@ export default function VehicleDetailScreen() {
 
         {/* Seller Card */}
         <View style={[styles.contentSection, { backgroundColor: colors.surface }]}>
-          <Text style={[styles.sectionHeading, { color: colors.text }]}>Seller Information</Text>
+          <Text style={[styles.sectionHeading, { color: colors.text }]}>{forSale ? 'Seller Information' : 'Creator Information'}</Text>
 
           <View style={[styles.sellerCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
             <Image source={{ uri: vehicle.seller.avatar }} style={styles.sellerAvatar} contentFit="cover" />
             <View style={{ flex: 1, gap: 2 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 4 }}>
                 <Text style={[styles.sellerName, { color: colors.text }]}>{vehicle.seller.name}</Text>
                 {vehicle.seller.verified && (
                   <Ionicons name="checkmark-circle" size={16} color={colors.verified} />
@@ -271,9 +275,9 @@ export default function VehicleDetailScreen() {
               <Text style={[styles.sellerSub, { color: colors.textSecondary }]}>
                 {vehicle.seller.dealershipName || vehicle.seller.location}
               </Text>
-              <View style={[styles.sellerBadgePill, { backgroundColor: colors.accentLight }]}>
-                <Text style={[styles.sellerBadgeText, { color: colors.accent }]}>
-                  {vehicle.seller.badgeText || 'Verified Partner'}
+              <View style={[styles.sellerBadgePill, { backgroundColor: colors.goldLight }]}>
+                <Text style={[styles.sellerBadgeText, { color: colors.goldText }]}>
+                  {vehicle.seller.badgeText || (forSale ? 'Seller' : 'Creator')}
                 </Text>
               </View>
             </View>
@@ -281,8 +285,8 @@ export default function VehicleDetailScreen() {
         </View>
       </ScrollView>
 
-      {/* Sticky Bottom Actions */}
-      <View
+      {/* Sale listings only: social posts never expose seller contact actions. */}
+      {forSale && <View
         style={[
           styles.bottomStickyBar,
           {
@@ -299,11 +303,11 @@ export default function VehicleDetailScreen() {
           accessibilityLabel="Call seller"
         >
           <Ionicons name="call-outline" size={18} color={colors.accent} style={{ marginRight: 6 }} />
-          <Text style={[styles.actionButtonOutlineText, { color: colors.accent }]}>Call</Text>
+          <Text style={[styles.actionButtonOutlineText, { color: colors.link }]}>Call</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.actionButtonFilled, { backgroundColor: colors.accent }]}
+          style={[styles.actionButtonFilled, { backgroundColor: colors.action }]}
           onPress={() => handleContactAction('whatsapp')}
           accessibilityRole="button"
           accessibilityLabel="Chat on WhatsApp"
@@ -311,14 +315,15 @@ export default function VehicleDetailScreen() {
           <Ionicons
             name="logo-whatsapp"
             size={20}
-            color={isDark ? '#121214' : '#FFFFFF'}
+            color={colors.onAccent}
             style={{ marginRight: 8 }}
           />
-          <Text style={[styles.actionButtonFilledText, { color: isDark ? '#121214' : '#FFFFFF' }]}>
+          <Text style={[styles.actionButtonFilledText, { color: colors.onAccent }]}>
             WhatsApp Inquiry
           </Text>
         </TouchableOpacity>
-      </View>
+      </View>}
+      {dialog}
     </View>
   );
 }
@@ -326,11 +331,14 @@ export default function VehicleDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    width: '100%',
+    maxWidth: 800,
+    alignSelf: 'center',
   },
   floatingNav: {
-    position: 'absolute',
-    left: Spacing.four,
-    right: Spacing.four,
+    paddingHorizontal: Spacing.four,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
     zIndex: 30,
@@ -392,6 +400,7 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
   },
   tagRow: {
+    flexWrap: 'wrap',
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.two,
@@ -425,15 +434,13 @@ const styles = StyleSheet.create({
   },
   priceRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'baseline',
     gap: Spacing.three,
   },
   priceValue: {
     fontSize: 24,
     fontWeight: '900',
-  },
-  vatText: {
-    fontSize: 12,
   },
   sectionHeading: {
     fontSize: 16,
@@ -446,7 +453,8 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   specBox: {
-    width: (width - 48) / 2,
+    width: '48%',
+    flexGrow: 1,
     padding: Spacing.three,
     borderRadius: Radius.md,
     gap: 2,
@@ -472,6 +480,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   specListVal: {
+    flex: 1,
+    textAlign: 'right',
+    marginLeft: 12,
     fontSize: 13,
     fontWeight: '600',
   },
@@ -526,10 +537,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   bottomStickyBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     flexDirection: 'row',
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.three,

@@ -1,542 +1,118 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Share,
-  useWindowDimensions,
-} from 'react-native';
+import { useState, type ComponentProps } from 'react';
+import { View, Text, StyleSheet, Pressable, Share, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Vehicle } from '@/types';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useSaved } from '@/context/SavedContext';
-import { Spacing, Radius } from '@/constants/theme';
+import { BrandButton } from '@/components/ui/BrandButton';
 import { CommentsSheet } from './CommentsSheet';
 
-interface ReelItemProps {
-  vehicle: Vehicle;
-  isActive: boolean;
-  itemHeight: number;
-}
-
-export function ReelItem({ vehicle, isActive, itemHeight }: ReelItemProps) {
-  const { colors, isDark } = useAppTheme();
-  const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+export function ReelItem({ vehicle }: { vehicle: Vehicle }) {
+  const { colors } = useAppTheme();
   const { isSaved, toggleSave, isLiked, toggleLike, getLikesCount } = useSaved();
-
-  const [isMuted, setIsMuted] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [photoIndex, setPhotoIndex] = useState(0);
-
+  const [mediaState, setMediaState] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [retry, setRetry] = useState(0);
   const saved = isSaved(vehicle.id);
+  const forSale = vehicle.listingType === 'listing';
   const liked = isLiked(vehicle.id);
-  const likesCount = getLikesCount(vehicle);
-
+  const openDetails = () => router.push(`/vehicle/${vehicle.id}`);
   const handleShare = async () => {
-    try {
-      await Share.share({
-        message: `Check out this ${vehicle.title} on VehicleSpot! ${
-          vehicle.priceAED ? `Price: AED ${vehicle.priceAED.toLocaleString()}` : ''
-        }`,
-      });
-    } catch (err) {
-      console.warn('Share error', err);
-    }
+    try { await Share.share({ message: `Check out this ${vehicle.title} on VehicleSpot! ${forSale && vehicle.priceAED ? 'Price: AED ' + vehicle.priceAED.toLocaleString() : ''}` }); }
+    catch (err) { console.warn('Share error', err); }
   };
-
-  const currentMediaUrl =
-    vehicle.mediaUrls && vehicle.mediaUrls.length > 0
-      ? vehicle.mediaUrls[photoIndex % vehicle.mediaUrls.length]
-      : 'https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&w=1200&q=80';
-
-  const formatPrice = (price?: number) => {
-    if (!price) return null;
-    return `AED ${price.toLocaleString()}`;
-  };
-
+  const action = (icon: ComponentProps<typeof Ionicons>['name'], label: string, onPress: () => void, active = false, accessibilityLabel = label) => (
+    <Pressable onPress={onPress} accessibilityLabel={accessibilityLabel} accessibilityRole="button" accessibilityState={{ selected: active }}
+      style={({ pressed }) => [styles.action, { backgroundColor: pressed ? colors.accentLight : 'transparent' }]}>
+      <Ionicons name={icon} size={22} color={active ? colors.accent : colors.textSecondary} />
+      <Text numberOfLines={1} style={[styles.actionText, { color: active ? colors.link : colors.textSecondary }]}>{label}</Text>
+    </Pressable>
+  );
   return (
-    <View style={[styles.container, { height: itemHeight, width }]}>
-      {/* Background Media */}
-      <Image
-        source={{ uri: currentMediaUrl }}
-        style={StyleSheet.absoluteFill}
-        contentFit="cover"
-        transition={300}
-      />
-
-      {/* Dark gradient simulation overlay */}
-      <View style={[styles.darkOverlay, { backgroundColor: 'rgba(0,0,0,0.38)' }]} />
-      <View style={styles.bottomGradientOverlay} />
-
-      {/* Top Bar Indicators */}
-      <View style={[styles.topControls, { top: insets.top + 56 }]}>
-        {/* Content Type Badge */}
-        <View style={styles.badgeRow}>
-          {vehicle.listingType === 'listing' ? (
-            <View style={[styles.typeBadge, { backgroundColor: 'rgba(0, 0, 0, 0.65)' }]}>
-              <View style={[styles.liveDot, { backgroundColor: colors.accent }]} />
-              <Text style={styles.typeBadgeText}>FOR SALE</Text>
-            </View>
-          ) : (
-            <View style={[styles.typeBadge, { backgroundColor: 'rgba(29, 155, 240, 0.75)' }]}>
-              <Ionicons name="sparkles" size={12} color="#FFFFFF" style={{ marginRight: 4 }} />
-              <Text style={styles.typeBadgeText}>COMMUNITY REEL</Text>
-            </View>
-          )}
-
-          {/* Honest Prototype Asset Badge */}
-          <View style={[styles.honestBadge, { backgroundColor: 'rgba(0, 0, 0, 0.6)' }]}>
-            <Ionicons
-              name={vehicle.mediaType === 'video' ? 'videocam-outline' : 'images-outline'}
-              size={12}
-              color="#DFBE88"
-              style={{ marginRight: 4 }}
-            />
-            <Text style={styles.honestBadgeText}>
-              {vehicle.mediaType === 'video'
-                ? `4K Reel • ${vehicle.videoDuration || '0:30'} (Sample)`
-                : `Photo Gallery (${vehicle.mediaUrls.length})`}
-            </Text>
+    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+      <View style={[styles.media, { backgroundColor: colors.surfaceElevated }]}>
+        <Image key={retry} source={{ uri: vehicle.mediaUrls[photoIndex] }} style={StyleSheet.absoluteFill} contentFit="cover"
+          transition={180} onLoadStart={() => setMediaState('loading')} onLoad={() => setMediaState('ready')} onError={() => setMediaState('error')} />
+        {mediaState === 'loading' && <View style={styles.mediaState}><ActivityIndicator color={colors.accent} accessibilityLabel="Loading vehicle photo" /></View>}
+        {mediaState === 'error' && <View style={[styles.mediaState, { backgroundColor: colors.surfaceElevated }]}>
+          <Ionicons name="image-outline" size={32} color={colors.textSecondary} />
+          <Text style={{ color: colors.textSecondary }}>Photo could not load</Text>
+          <BrandButton label="Retry photo" variant="secondary" onPress={() => { setMediaState('loading'); setRetry(retry + 1); }} />
+        </View>}
+        <View style={styles.mediaTop}>
+          <View style={[styles.badge, { backgroundColor: vehicle.seller.verified ? colors.goldLight : colors.surface }]}>
+            <Ionicons name={vehicle.seller.verified ? 'ribbon-outline' : 'car-sport-outline'} size={13} color={vehicle.seller.verified ? colors.goldText : colors.link} />
+            <Text style={[styles.badgeText, { color: vehicle.seller.verified ? colors.goldText : colors.text }]}>{vehicle.listingType === 'listing' ? 'FOR SALE' : 'COMMUNITY REEL'}</Text>
           </View>
         </View>
-
-        {/* Audio Toggle button */}
-        {vehicle.mediaType === 'video' && (
-          <TouchableOpacity
-            style={styles.audioButton}
-            onPress={() => setIsMuted(!isMuted)}
-            accessibilityLabel={isMuted ? 'Unmute audio' : 'Mute audio'}
-            accessibilityRole="button"
-          >
-            <Ionicons name={isMuted ? 'volume-mute' : 'volume-high'} size={18} color="#FFFFFF" />
-          </TouchableOpacity>
-        )}
+        <View style={[styles.mediaLabel, { backgroundColor: colors.surface }]}>
+          <Ionicons name="images-outline" size={13} color={colors.link} />
+          <Text style={[styles.mediaLabelText, { color: colors.textSecondary }]}>{vehicle.mediaType === 'video' ? 'Sample image · no video playback' : `Photo Gallery (${vehicle.mediaUrls.length})`}</Text>
+        </View>
+        {vehicle.mediaType === 'photo' && vehicle.mediaUrls.length > 1 && <View style={styles.dots}>
+          {vehicle.mediaUrls.map((_, index) => <Pressable key={index} onPress={() => { setMediaState('loading'); setPhotoIndex(index); }} accessibilityRole="button" accessibilityLabel={`Show photo ${index + 1}`}
+            accessibilityState={{ selected: index === photoIndex }} style={styles.dotTarget}><View style={[styles.dot, { backgroundColor: index === photoIndex ? colors.accent : colors.surface }]} /></Pressable>)}
+        </View>}
       </View>
-
-      {/* Photo carousel dots indicator for multi-photo */}
-      {vehicle.mediaType === 'photo' && vehicle.mediaUrls.length > 1 && (
-        <View style={[styles.carouselIndicators, { top: insets.top + 98 }]}>
-          {vehicle.mediaUrls.map((_, i) => (
-            <TouchableOpacity
-              key={i}
-              onPress={() => setPhotoIndex(i)}
-              style={[
-                styles.carouselDot,
-                { backgroundColor: i === photoIndex ? '#FFFFFF' : 'rgba(255, 255, 255, 0.4)' },
-              ]}
-            />
+      <View style={styles.body}>
+        <Pressable onPress={forSale ? openDetails : undefined} accessibilityLabel={`${forSale ? 'Seller' : 'Creator'} ${vehicle.seller.name}`} style={styles.seller}>
+          <Image source={{ uri: vehicle.seller.avatar }} style={styles.avatar} />
+          <View style={styles.sellerInfo}>
+            <Text style={[styles.sellerName, { color: colors.text }]} numberOfLines={1}>@{vehicle.seller.handle}</Text>
+            {vehicle.seller.verified && <View style={styles.verified}><Ionicons name="checkmark-circle" size={13} color={colors.verified} /><Text style={[styles.sellerBadge, { color: colors.goldText }]}>{vehicle.seller.badgeText || 'Verified'}</Text></View>}
+          </View>
+        </Pressable>
+        <Text style={[styles.title, { color: colors.text }]}>{vehicle.title}</Text>
+        {forSale && !!vehicle.priceAED && <Text style={[styles.price, { color: colors.link }]}>AED {vehicle.priceAED.toLocaleString()}</Text>}
+        <View style={styles.location}><Ionicons name="location-outline" size={15} color={colors.textSecondary} /><Text style={[styles.locationText, { color: colors.textSecondary }]}>{vehicle.location}</Text></View>
+        <View style={styles.specs}>
+          {[vehicle.specs.horsepower, ...(vehicle.mileageKm ? [vehicle.mileageKm.toLocaleString() + ' KM'] : []), vehicle.specs.regionalSpecs].map((spec, i) => (
+            <View key={i} style={[styles.spec, { backgroundColor: colors.background }]}><Text style={[styles.specText, { color: colors.textSecondary }]}>{spec}</Text></View>
           ))}
         </View>
-      )}
-
-      {/* Right-side Social Action Stack (Instagram-style) */}
-      <View style={[styles.rightActions, { bottom: insets.bottom + 90 }]}>
-        {/* Seller Avatar */}
-        <TouchableOpacity
-          style={styles.avatarContainer}
-          onPress={() => {
-            if (vehicle.listingType === 'listing') {
-              router.push(`/vehicle/${vehicle.id}` as any);
-            }
-          }}
-          accessibilityLabel={`Seller ${vehicle.seller.name}`}
-          accessibilityRole="button"
-        >
-          <Image source={{ uri: vehicle.seller.avatar }} style={styles.avatarImg} contentFit="cover" />
-          {vehicle.seller.verified && (
-            <View style={[styles.avatarVerifiedBadge, { backgroundColor: colors.verified }]}>
-              <Ionicons name="checkmark" size={10} color="#FFFFFF" />
-            </View>
-          )}
-        </TouchableOpacity>
-
-        {/* Like Button */}
-        <TouchableOpacity
-          style={styles.actionBtn}
-          onPress={() => toggleLike(vehicle.id)}
-          accessibilityLabel="Like this vehicle"
-          accessibilityRole="button"
-        >
-          <Ionicons
-            name={liked ? 'heart' : 'heart-outline'}
-            size={30}
-            color={liked ? '#FF3040' : '#FFFFFF'}
-          />
-          <Text style={styles.actionText}>{likesCount}</Text>
-        </TouchableOpacity>
-
-        {/* Comment Button */}
-        <TouchableOpacity
-          style={styles.actionBtn}
-          onPress={() => setShowComments(true)}
-          accessibilityLabel="Open comments"
-          accessibilityRole="button"
-        >
-          <Ionicons name="chatbubble-outline" size={28} color="#FFFFFF" />
-          <Text style={styles.actionText}>{vehicle.commentsCount}</Text>
-        </TouchableOpacity>
-
-        {/* Save / Bookmark Button */}
-        <TouchableOpacity
-          style={styles.actionBtn}
-          onPress={() => toggleSave(vehicle.id)}
-          accessibilityLabel="Save vehicle"
-          accessibilityRole="button"
-        >
-          <Ionicons
-            name={saved ? 'bookmark' : 'bookmark-outline'}
-            size={28}
-            color={saved ? colors.accent : '#FFFFFF'}
-          />
-          <Text style={[styles.actionText, saved && { color: colors.accent }]}>
-            {saved ? 'Saved' : 'Save'}
-          </Text>
-        </TouchableOpacity>
-
-        {/* Share Button */}
-        <TouchableOpacity
-          style={styles.actionBtn}
-          onPress={handleShare}
-          accessibilityLabel="Share vehicle"
-          accessibilityRole="button"
-        >
-          <Ionicons name="paper-plane-outline" size={26} color="#FFFFFF" />
-          <Text style={styles.actionText}>Share</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Bottom Content Info Overlay */}
-      <View style={[styles.bottomContent, { bottom: insets.bottom + 80 }]}>
-        {/* Seller Info Row */}
-        <View style={styles.sellerRow}>
-          <Text style={styles.sellerName}>@{vehicle.seller.handle}</Text>
-          {vehicle.seller.verified && (
-            <View style={styles.verifiedRow}>
-              <Ionicons name="checkmark-circle" size={14} color={colors.verified} />
-              <Text style={[styles.sellerTypeTag, { color: colors.accent }]}>
-                {vehicle.seller.badgeText || 'Verified'}
-              </Text>
-            </View>
-          )}
+        <View style={[styles.actions, { borderColor: colors.border }]}>
+          {action(liked ? 'heart' : 'heart-outline', String(getLikesCount(vehicle)), () => toggleLike(vehicle.id), liked, 'Like this vehicle')}
+          {action('chatbubble-outline', String(vehicle.commentsCount), () => setShowComments(true), false, 'Open comments')}
+          {action(saved ? 'bookmark' : 'bookmark-outline', saved ? 'Saved' : 'Save', () => toggleSave(vehicle.id), saved, saved ? 'Remove from saved' : 'Save vehicle')}
+          {action('share-outline', 'Share', handleShare)}
         </View>
-
-        {/* Vehicle Title */}
-        <Text style={styles.vehicleTitle} numberOfLines={2}>
-          {vehicle.title}
-        </Text>
-
-        {/* Price & Location Row */}
-        {vehicle.priceAED ? (
-          <View style={styles.priceRow}>
-            <Text style={[styles.priceTag, { color: colors.accent }]}>
-              {formatPrice(vehicle.priceAED)}
-            </Text>
-            <View style={styles.locationPill}>
-              <Ionicons name="location-sharp" size={12} color="#FFFFFF" style={{ marginRight: 3 }} />
-              <Text style={styles.locationText}>{vehicle.location}</Text>
-            </View>
-          </View>
-        ) : (
-          <View style={styles.locationPill}>
-            <Ionicons name="location-sharp" size={12} color="#FFFFFF" style={{ marginRight: 3 }} />
-            <Text style={styles.locationText}>{vehicle.location}</Text>
-          </View>
-        )}
-
-        {/* Specs Pills */}
-        <View style={styles.specsRow}>
-          <View style={styles.specPill}>
-            <Text style={styles.specPillText}>{vehicle.specs.horsepower}</Text>
-          </View>
-          {vehicle.mileageKm && (
-            <View style={styles.specPill}>
-              <Text style={styles.specPillText}>{vehicle.mileageKm.toLocaleString()} KM</Text>
-            </View>
-          )}
-          <View style={styles.specPill}>
-            <Text style={styles.specPillText}>{vehicle.specs.regionalSpecs}</Text>
-          </View>
-        </View>
-
-        {/* Primary CTA: "View car" */}
-        {vehicle.listingType === 'listing' ? (
-          <TouchableOpacity
-            style={[styles.viewCarButton, { backgroundColor: colors.accent }]}
-            onPress={() => router.push(`/vehicle/${vehicle.id}` as any)}
-            activeOpacity={0.88}
-            accessibilityLabel={`View full details for ${vehicle.title}`}
-            accessibilityRole="button"
-          >
-            <Text style={[styles.viewCarButtonText, { color: isDark ? '#121214' : '#FFFFFF' }]}>
-              View Car Details
-            </Text>
-            <Ionicons
-              name="arrow-forward"
-              size={18}
-              color={isDark ? '#121214' : '#FFFFFF'}
-              style={{ marginLeft: 6 }}
-            />
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            style={[styles.viewCarButton, { backgroundColor: 'rgba(255, 255, 255, 0.25)' }]}
-            onPress={() => setShowComments(true)}
-            activeOpacity={0.88}
-            accessibilityLabel="Join discussion"
-            accessibilityRole="button"
-          >
-            <Text style={[styles.viewCarButtonText, { color: '#FFFFFF' }]}>
-              Join Discussion ({vehicle.commentsCount})
-            </Text>
-            <Ionicons name="chatbubble" size={16} color="#FFFFFF" style={{ marginLeft: 6 }} />
-          </TouchableOpacity>
-        )}
+        <BrandButton label={vehicle.listingType === 'listing' ? 'View Car Details' : `Join Discussion (${vehicle.commentsCount})`}
+          onPress={vehicle.listingType === 'listing' ? openDetails : () => setShowComments(true)} />
       </View>
-
-      {/* Interactive Comments Modal */}
-      <CommentsSheet
-        visible={showComments}
-        onClose={() => setShowComments(false)}
-        vehicle={vehicle}
-      />
+      <CommentsSheet visible={showComments} onClose={() => setShowComments(false)} vehicle={vehicle} />
     </View>
   );
 }
-
 const styles = StyleSheet.create({
-  container: {
-    position: 'relative',
-    backgroundColor: '#000000',
-    overflow: 'hidden',
-  },
-  darkOverlay: {
-    ...StyleSheet.absoluteFill,
-  },
-  bottomGradientOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 380,
-    backgroundColor: 'rgba(0, 0, 0, 0.72)',
-  },
-  topControls: {
-    position: 'absolute',
-    left: Spacing.four,
-    right: Spacing.four,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    zIndex: 10,
-  },
-  badgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-  },
-  typeBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: 5,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: Radius.full,
-    marginRight: 6,
-  },
-  typeBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  honestBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.two,
-    paddingVertical: 4,
-    borderRadius: Radius.full,
-  },
-  honestBadgeText: {
-    color: 'rgba(255, 255, 255, 0.85)',
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  audioButton: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.full,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-  },
-  carouselIndicators: {
-    position: 'absolute',
-    left: Spacing.four,
-    flexDirection: 'row',
-    gap: 6,
-    zIndex: 10,
-  },
-  carouselDot: {
-    width: 22,
-    height: 3,
-    borderRadius: 2,
-  },
-  rightActions: {
-    position: 'absolute',
-    right: Spacing.three,
-    alignItems: 'center',
-    gap: Spacing.four,
-    zIndex: 20,
-  },
-  avatarContainer: {
-    position: 'relative',
-    marginBottom: Spacing.one,
-  },
-  avatarImg: {
-    width: 44,
-    height: 44,
-    borderRadius: Radius.full,
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-  },
-  avatarVerifiedBadge: {
-    position: 'absolute',
-    bottom: -2,
-    right: -2,
-    width: 16,
-    height: 16,
-    borderRadius: Radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: '#000000',
-  },
-  actionBtn: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  actionText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '600',
-    marginTop: 3,
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
-  },
-  bottomContent: {
-    position: 'absolute',
-    left: Spacing.four,
-    right: 80,
-    zIndex: 20,
-  },
-  sellerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: Spacing.one,
-    gap: Spacing.two,
-  },
-  sellerName: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
-    textShadowColor: 'rgba(0, 0, 0, 0.8)',
-    textShadowRadius: 4,
-  },
-  verifiedRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-  },
-  sellerTypeTag: {
-    fontSize: 11,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-  },
-  vehicleTitle: {
-    color: '#FFFFFF',
-    fontSize: 17,
-    fontWeight: '800',
-    lineHeight: 22,
-    marginBottom: Spacing.one,
-    textShadowColor: 'rgba(0, 0, 0, 0.8)',
-    textShadowRadius: 4,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-    marginBottom: Spacing.two,
-  },
-  priceTag: {
-    fontSize: 20,
-    fontWeight: '900',
-    letterSpacing: 0.5,
-    textShadowColor: 'rgba(0, 0, 0, 0.8)',
-    textShadowRadius: 4,
-  },
-  locationPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.18)',
-    paddingHorizontal: Spacing.two,
-    paddingVertical: 3,
-    borderRadius: Radius.full,
-  },
-  locationText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  specsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.two,
-    marginBottom: Spacing.three,
-  },
-  specPill: {
-    backgroundColor: 'rgba(255, 255, 255, 0.14)',
-    paddingHorizontal: Spacing.two,
-    paddingVertical: 3,
-    borderRadius: Radius.sm,
-    borderWidth: 0.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  specPillText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  viewCarButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 11,
-    paddingHorizontal: Spacing.four,
-    borderRadius: Radius.full,
-    alignSelf: 'flex-start',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  viewCarButtonText: {
-    fontSize: 13,
-    fontWeight: '800',
-    letterSpacing: 0.3,
-  },
+  card: { borderRadius: 22, borderWidth: 1, overflow: 'hidden', shadowColor: '#0F172A', shadowOpacity: 0.06, shadowOffset: { width: 0, height: 4 }, shadowRadius: 12, elevation: 2 },
+  media: { width: '100%', aspectRatio: 1.75, maxHeight: 480, position: 'relative' },
+  mediaState: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', gap: 12 },
+  mediaTop: { position: 'absolute', top: 12, left: 12, right: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 },
+  badge: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 7, borderRadius: 8, flexShrink: 1 },
+  badgeText: { fontSize: 10, fontWeight: '800', letterSpacing: 0.7, flexShrink: 1 },
+  mediaLabel: { position: 'absolute', bottom: 12, left: 12, flexDirection: 'row', gap: 5, alignItems: 'center', borderRadius: 8, padding: 8, maxWidth: '85%' },
+  mediaLabelText: { fontSize: 10, fontWeight: '600', flexShrink: 1 },
+  dots: { position: 'absolute', right: 8, bottom: 2, flexDirection: 'row' },
+  dotTarget: { width: 32, height: 44, alignItems: 'center', justifyContent: 'center' },
+  dot: { width: 8, height: 8, borderRadius: 4 },
+  body: { padding: 16, gap: 10 },
+  seller: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44 },
+  avatar: { width: 38, height: 38, borderRadius: 19 },
+  sellerInfo: { flex: 1, minWidth: 0, gap: 3 },
+  sellerName: { fontSize: 13, fontWeight: '600' },
+  verified: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4 },
+  sellerBadge: { fontSize: 9, fontWeight: '700', letterSpacing: 0.6, textTransform: 'uppercase' },
+  title: { fontSize: 21, lineHeight: 28, fontWeight: '700', letterSpacing: -0.4 },
+  price: { fontSize: 24, fontWeight: '800', letterSpacing: -0.5 },
+  location: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  locationText: { flex: 1, fontSize: 13 },
+  specs: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  spec: { paddingHorizontal: 10, paddingVertical: 7, borderRadius: 8 },
+  specText: { fontSize: 11, fontWeight: '600' },
+  actions: { flexDirection: 'row', borderTopWidth: 1, paddingTop: 8, gap: 4 },
+  action: { flex: 1, minWidth: 0, minHeight: 56, borderRadius: 10, alignItems: 'center', justifyContent: 'center', gap: 4 },
+  actionText: { fontSize: 11, fontWeight: '600' },
 });

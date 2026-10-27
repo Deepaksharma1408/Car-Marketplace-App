@@ -1,9 +1,9 @@
-﻿import React from 'react';
+import { TouchableOpacity } from '@/components/ui/Touchable';
+import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   ScrollView,
   StatusBar,
 } from 'react-native';
@@ -34,7 +34,7 @@ export default function ProfileScreen() {
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingTop: Math.max(insets.top, 16) + 14, paddingBottom: insets.bottom + 100 },
+          { paddingTop: Math.max(insets.top, 16) + 14, paddingBottom: 28 },
         ]}
         showsVerticalScrollIndicator={false}
       >
@@ -129,7 +129,7 @@ export default function ProfileScreen() {
                 </Text>
               </View>
               <View style={[styles.preferenceBadge, { backgroundColor: colors.surfaceElevated }]}>
-                <Text style={[styles.preferenceBadgeText, { color: colors.accent }]}>
+                <Text style={[styles.preferenceBadgeText, { color: colors.link }]}>
                   {getPreferenceLabel()}
                 </Text>
               </View>
@@ -159,60 +159,6 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* Product Roadmap Context (Stages 1, 2, 3) */}
-        <View style={styles.sectionWrap}>
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>PRODUCT ROADMAP</Text>
-
-          <View
-            style={[
-              styles.roadmapCard,
-              { backgroundColor: colors.surface, borderColor: colors.border },
-            ]}
-          >
-            {/* Stage 1 */}
-            <View style={styles.stageRow}>
-              <View style={[styles.stageBadge, { backgroundColor: colors.accent }]}>
-                <Text style={[styles.stageBadgeText, { color: isDark ? '#121214' : '#FFFFFF' }]}>
-                  STAGE 1 • ACTIVE
-                </Text>
-              </View>
-              <Text style={[styles.stageTitle, { color: colors.text }]}>Dubai Cars & Discovery</Text>
-              <Text style={[styles.stageDesc, { color: colors.textSecondary }]}>
-                Vertical video discovery, verified dealer listings, AED pricing, Instagram-style interactions, and multi-path creation.
-              </Text>
-            </View>
-
-            <View style={[styles.stageDivider, { backgroundColor: colors.borderSubtle }]} />
-
-            {/* Stage 2 */}
-            <View style={styles.stageRow}>
-              <View style={[styles.stageBadgeInactive, { backgroundColor: colors.surfaceElevated }]}>
-                <Text style={[styles.stageBadgeInactiveText, { color: colors.textSecondary }]}>
-                  STAGE 2 • PLANNED
-                </Text>
-              </View>
-              <Text style={[styles.stageTitle, { color: colors.text }]}>UAE Expansion & Arabic / RTL</Text>
-              <Text style={[styles.stageDesc, { color: colors.textSecondary }]}>
-                Full Abu Dhabi/Northern Emirates rollout, native Arabic RTL support, dealer subscription portal, and boosted reels.
-              </Text>
-            </View>
-
-            <View style={[styles.stageDivider, { backgroundColor: colors.borderSubtle }]} />
-
-            {/* Stage 3 */}
-            <View style={styles.stageRow}>
-              <View style={[styles.stageBadgeInactive, { backgroundColor: colors.surfaceElevated }]}>
-                <Text style={[styles.stageBadgeInactiveText, { color: colors.textSecondary }]}>
-                  STAGE 3 • FUTURE
-                </Text>
-              </View>
-              <Text style={[styles.stageTitle, { color: colors.text }]}>Bikes, Yachts, Plates & AI</Text>
-              <Text style={[styles.stageDesc, { color: colors.textSecondary }]}>
-                Superbikes, luxury yachts, Dubai VIP number plates, luxury rentals, real-time in-app chat, and AI recommendation feed.
-              </Text>
-            </View>
-          </View>
-        </View>
       </ScrollView>
     </View>
   );
@@ -223,6 +169,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
+    width: '100%',
+    maxWidth: 800,
+    alignSelf: 'center',
     paddingHorizontal: Spacing.four,
   },
   profileHeader: {
@@ -256,6 +205,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   userName: {
+    flexShrink: 1,
     fontSize: 20,
     fontWeight: '800',
   },
@@ -341,6 +291,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   preferenceBadge: {
+    flexShrink: 1,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: Radius.full,
@@ -353,49 +304,5 @@ const styles = StyleSheet.create({
   itemDivider: {
     height: 1,
     marginLeft: 56,
-  },
-  roadmapCard: {
-    borderRadius: Radius.lg,
-    padding: Spacing.four,
-    borderWidth: 1,
-    gap: Spacing.four,
-  },
-  stageRow: {
-    gap: 4,
-  },
-  stageBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: Radius.sm,
-    marginBottom: 4,
-  },
-  stageBadgeText: {
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 0.5,
-  },
-  stageBadgeInactive: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: Radius.sm,
-    marginBottom: 4,
-  },
-  stageBadgeInactiveText: {
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  stageTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  stageDesc: {
-    fontSize: 12,
-    lineHeight: 17,
-  },
-  stageDivider: {
-    height: 1,
   },
 });

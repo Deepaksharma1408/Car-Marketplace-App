@@ -1,10 +1,11 @@
+import { ListingImage } from '@/components/ui/ListingImage';
+import { TouchableOpacity } from '@/components/ui/Touchable';
 import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TextInput,
-  TouchableOpacity,
   FlatList,
   ScrollView,
   StatusBar,
@@ -16,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MOCK_VEHICLES } from '@/data/mockVehicles';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useSaved } from '@/context/SavedContext';
-import { SearchFilters, Vehicle } from '@/types';
+import { SearchFilters } from '@/types';
 import { FilterModal } from '@/components/search/FilterModal';
 import { Spacing, Radius } from '@/constants/theme';
 
@@ -28,6 +29,7 @@ export default function SearchScreen() {
   const { isSaved, toggleSave } = useSaved();
 
   const [query, setQuery] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [showFilterModal, setShowFilterModal] = useState(false);
 
@@ -111,23 +113,26 @@ export default function SearchScreen() {
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors.background} />
 
       {/* Top Search & Filter Bar */}
-      <View style={[styles.topBar, { paddingTop: insets.top + 8, borderBottomColor: colors.borderSubtle }]}>
+      <View style={[styles.topBar, { backgroundColor: colors.surface, paddingTop: insets.top + 8, borderBottomColor: colors.borderSubtle }]}>
         <View style={styles.searchRow}>
           <View
             style={[
               styles.inputWrap,
               {
                 backgroundColor: colors.surfaceElevated,
-                borderColor: colors.border,
+                borderColor: searchFocused ? colors.accent : colors.border,
               },
             ]}
           >
             <Ionicons name="search" size={18} color={colors.textSecondary} style={{ marginRight: 8 }} />
             <TextInput
               style={[styles.input, { color: colors.text }]}
+              accessibilityLabel="Search vehicles"
               placeholder="Search Porsche, G63, Ferrari, Dubai..."
               placeholderTextColor={colors.textMuted}
               value={query}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
               onChangeText={setQuery}
               returnKeyType="search"
             />
@@ -143,7 +148,7 @@ export default function SearchScreen() {
             style={[
               styles.filterBtn,
               {
-                backgroundColor: activeFiltersCount > 0 ? colors.accent : colors.surfaceElevated,
+                backgroundColor: activeFiltersCount > 0 ? colors.action : colors.surfaceElevated,
                 borderColor: activeFiltersCount > 0 ? colors.accent : colors.border,
               },
             ]}
@@ -154,11 +159,11 @@ export default function SearchScreen() {
             <Ionicons
               name="options-outline"
               size={20}
-              color={activeFiltersCount > 0 ? (isDark ? '#121214' : '#FFFFFF') : colors.text}
+              color={activeFiltersCount > 0 ? colors.onAccent : colors.text}
             />
             {activeFiltersCount > 0 && (
-              <View style={[styles.filterBadge, { backgroundColor: isDark ? '#121214' : '#FFFFFF' }]}>
-                <Text style={[styles.filterBadgeText, { color: colors.accent }]}>
+              <View style={[styles.filterBadge, { backgroundColor: colors.onAccent }]}>
+                <Text style={[styles.filterBadgeText, { color: colors.link }]}>
                   {activeFiltersCount}
                 </Text>
               </View>
@@ -180,7 +185,7 @@ export default function SearchScreen() {
                 style={[
                   styles.categoryChip,
                   {
-                    backgroundColor: isSelected ? colors.accent : colors.surfaceElevated,
+                    backgroundColor: isSelected ? colors.action : colors.surfaceElevated,
                     borderColor: isSelected ? colors.accent : colors.border,
                   },
                 ]}
@@ -190,7 +195,7 @@ export default function SearchScreen() {
                   style={[
                     styles.categoryText,
                     {
-                      color: isSelected ? (isDark ? '#121214' : '#FFFFFF') : colors.text,
+                      color: isSelected ? colors.onAccent : colors.text,
                       fontWeight: isSelected ? '700' : '500',
                     },
                   ]}
@@ -209,12 +214,12 @@ export default function SearchScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={[
           styles.listContainer,
-          { paddingBottom: insets.bottom + 90 },
+          { paddingBottom: 28 },
         ]}
         renderItem={({ item }) => {
           const saved = isSaved(item.id);
           return (
-            <TouchableOpacity
+            <View
               style={[
                 styles.vehicleCard,
                 {
@@ -222,43 +227,41 @@ export default function SearchScreen() {
                   borderColor: colors.border,
                 },
               ]}
-              activeOpacity={0.92}
-              onPress={() => router.push((`/vehicle/${item.id}`) as any)}
-              accessibilityLabel={`View ${item.title}`}
-              accessibilityRole="button"
             >
               {/* Image banner with badges */}
               <View style={styles.cardImageContainer}>
-                <Image
+                <ListingImage
+                  onOpen={() => router.push(`/vehicle/${item.id}`)}
+                  label={`View ${item.title}`}
                   source={{ uri: item.mediaUrls[0] }}
                   style={styles.cardImage}
                   contentFit="cover"
                   transition={200}
                 />
-                <View style={styles.cardTopOverlay}>
+                <View pointerEvents="box-none" style={styles.cardTopOverlay}>
                   <View
                     style={[
                       styles.cardBadge,
                       {
                         backgroundColor:
                           item.listingType === 'listing'
-                            ? 'rgba(0, 0, 0, 0.72)'
-                            : 'rgba(29, 155, 240, 0.8)',
+                            ? 'rgba(15, 23, 42, 0.8)'
+                            : 'rgba(196, 155, 85, 0.9)',
                       },
                     ]}
                   >
                     <Ionicons
-                      name={item.mediaType === 'video' ? 'play-circle' : 'images'}
+                      name={item.mediaType === 'video' ? 'videocam' : 'images'}
                       size={12}
                       color="#FFFFFF"
                       style={{ marginRight: 4 }}
                     />
                     <Text style={styles.cardBadgeText}>
-                      {item.listingType === 'listing'
-                        ? item.mediaType === 'video'
-                          ? 'REEL LISTING'
-                          : 'PHOTO TOUR'
-                        : 'COMMUNITY REEL'}
+                      {item.mediaType === 'video'
+                        ? item.listingType === 'listing'
+                          ? 'EXCLUSIVE · 4K VIDEO'
+                          : 'COMMUNITY REEL'
+                        : `PHOTO GALLERY (${item.mediaUrls.length})`}
                     </Text>
                   </View>
 
@@ -267,7 +270,7 @@ export default function SearchScreen() {
                     style={[
                       styles.cardSaveBtn,
                       {
-                        backgroundColor: saved ? colors.accent : 'rgba(0, 0, 0, 0.55)',
+                        backgroundColor: saved ? colors.accent : 'rgba(15, 23, 42, 0.65)',
                       },
                     ]}
                     onPress={() => toggleSave(item.id)}
@@ -282,9 +285,9 @@ export default function SearchScreen() {
                   </TouchableOpacity>
                 </View>
 
-                {item.priceAED && (
-                  <View style={[styles.cardPricePill, { backgroundColor: colors.accent }]}>
-                    <Text style={[styles.cardPriceText, { color: isDark ? '#121214' : '#FFFFFF' }]}>
+                {item.listingType === 'listing' && !!item.priceAED && (
+                  <View style={[styles.cardPricePill, { backgroundColor: colors.action }]}>
+                    <Text style={[styles.cardPriceText, { color: colors.onAccent }]}>
                       AED {item.priceAED.toLocaleString()}
                     </Text>
                   </View>
@@ -292,30 +295,42 @@ export default function SearchScreen() {
               </View>
 
               {/* Card Body */}
-              <View style={styles.cardBody}>
+              <TouchableOpacity
+                style={styles.cardBody}
+                onPress={() => router.push(`/vehicle/${item.id}`)}
+                accessibilityRole="button"
+                accessibilityLabel={`View specifications for ${item.title}`}
+              >
                 <View style={styles.cardHeaderRow}>
-                  <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={1}>
+                  <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={2}>
                     {item.title}
                   </Text>
                 </View>
 
                 {/* Specs row */}
                 <View style={styles.cardSpecsRow}>
-                  <Text style={[styles.cardSpecText, { color: colors.textSecondary }]}>
-                    {item.specs.horsepower}
-                  </Text>
-                  <Text style={[styles.cardSpecDot, { color: colors.textMuted }]}>•</Text>
+                  <View style={[styles.specTag, { backgroundColor: colors.surfaceElevated }]}>
+                    <Text style={[styles.cardSpecText, { color: colors.textSecondary }]}>
+                      {item.year}
+                    </Text>
+                  </View>
+                  <View style={[styles.specTag, { backgroundColor: colors.surfaceElevated }]}>
+                    <Text style={[styles.cardSpecText, { color: colors.textSecondary }]}>
+                      {item.specs.horsepower}
+                    </Text>
+                  </View>
                   {item.mileageKm && (
-                    <>
+                    <View style={[styles.specTag, { backgroundColor: colors.surfaceElevated }]}>
                       <Text style={[styles.cardSpecText, { color: colors.textSecondary }]}>
                         {item.mileageKm.toLocaleString()} KM
                       </Text>
-                      <Text style={[styles.cardSpecDot, { color: colors.textMuted }]}>•</Text>
-                    </>
+                    </View>
                   )}
-                  <Text style={[styles.cardSpecText, { color: colors.textSecondary }]}>
-                    {item.specs.regionalSpecs}
-                  </Text>
+                  <View style={[styles.specTag, { backgroundColor: colors.surfaceElevated }]}>
+                    <Text style={[styles.cardSpecText, { color: colors.textSecondary }]}>
+                      {item.specs.regionalSpecs}
+                    </Text>
+                  </View>
                 </View>
 
                 {/* Seller & Location footer */}
@@ -323,10 +338,14 @@ export default function SearchScreen() {
                   <View style={styles.cardSellerInfo}>
                     <Image source={{ uri: item.seller.avatar }} style={styles.cardSellerAvatar} />
                     <Text style={[styles.cardSellerName, { color: colors.text }]} numberOfLines={1}>
-                      {item.seller.name}
+                      {item.seller.dealershipName || item.seller.name}
                     </Text>
                     {item.seller.verified && (
-                      <Ionicons name="checkmark-circle" size={13} color={colors.verified} />
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={13}
+                        color={item.listingType === 'listing' ? colors.verified : colors.gold}
+                      />
                     )}
                   </View>
                   <View style={styles.cardLocation}>
@@ -336,8 +355,8 @@ export default function SearchScreen() {
                     </Text>
                   </View>
                 </View>
-              </View>
-            </TouchableOpacity>
+              </TouchableOpacity>
+            </View>
           );
         }}
         ListEmptyComponent={
@@ -347,10 +366,10 @@ export default function SearchScreen() {
             </View>
             <Text style={[styles.emptyTitle, { color: colors.text }]}>No Vehicles Found</Text>
             <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
-              We couldn't find any vehicles matching your criteria. Try adjusting your search query or reset your filters.
+              We could not find any vehicles matching your criteria. Try adjusting your search query or reset your filters.
             </Text>
             <TouchableOpacity
-              style={[styles.resetButton, { backgroundColor: colors.accent }]}
+              style={[styles.resetButton, { backgroundColor: colors.action }]}
               onPress={() => {
                 setQuery('');
                 setSelectedCategory('All');
@@ -366,7 +385,7 @@ export default function SearchScreen() {
               accessibilityLabel="Reset all filters"
               accessibilityRole="button"
             >
-              <Text style={[styles.resetButtonText, { color: isDark ? '#121214' : '#FFFFFF' }]}>
+              <Text style={[styles.resetButtonText, { color: colors.onAccent }]}>
                 Reset All Filters
               </Text>
             </TouchableOpacity>
@@ -400,6 +419,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   topBar: {
+    width: '100%',
+    maxWidth: 800,
+    alignSelf: 'center',
     borderBottomWidth: 1,
     paddingHorizontal: Spacing.four,
     paddingBottom: Spacing.three,
@@ -453,7 +475,7 @@ const styles = StyleSheet.create({
   },
   categoryChip: {
     paddingHorizontal: Spacing.three,
-    paddingVertical: 7,
+    paddingVertical: 12,
     borderRadius: Radius.full,
     borderWidth: 1,
   },
@@ -461,10 +483,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   listContainer: {
+    width: '100%',
+    maxWidth: 800,
+    alignSelf: 'center',
     padding: Spacing.four,
     gap: Spacing.four,
   },
   vehicleCard: {
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 1,
     borderRadius: Radius.lg,
     overflow: 'hidden',
     borderWidth: 1,
@@ -472,7 +502,7 @@ const styles = StyleSheet.create({
   cardImageContainer: {
     height: 200,
     position: 'relative',
-    backgroundColor: '#1E1E1E',
+    backgroundColor: '#EDF3F9',
   },
   cardImage: {
     width: '100%',
@@ -501,8 +531,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   cardSaveBtn: {
-    width: 32,
-    height: 32,
+    width: 44,
+    height: 44,
     borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
@@ -531,18 +561,24 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   cardSpecsRow: {
+    flexWrap: 'wrap',
+    gap: 6,
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: Spacing.three,
   },
-  cardSpecText: {
-    fontSize: 12,
+  specTag: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: Radius.sm,
   },
-  cardSpecDot: {
-    marginHorizontal: 5,
-    fontSize: 12,
+  cardSpecText: {
+    fontSize: 11,
+    fontWeight: '600',
   },
   cardFooter: {
+    flexWrap: 'wrap',
+    gap: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -561,6 +597,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.full,
   },
   cardSellerName: {
+    flexShrink: 1,
     fontSize: 12,
     fontWeight: '600',
     maxWidth: 140,

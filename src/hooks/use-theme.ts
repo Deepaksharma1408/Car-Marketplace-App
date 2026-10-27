@@ -1,8 +1,9 @@
-﻿import { Colors } from '@/constants/theme';
+import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAppTheme } from '@/context/ThemeContext';
 
 export function useTheme() {
+  const scheme = useColorScheme();
   try {
     const appTheme = useAppTheme();
     if (appTheme?.colors) {
@@ -11,7 +12,6 @@ export function useTheme() {
   } catch {
     // Fallback if rendered outside ThemeProvider
   }
-  const scheme = useColorScheme();
   const theme = scheme === 'unspecified' || !scheme ? 'light' : scheme;
   return Colors[theme === 'dark' ? 'dark' : 'light'];
 }
