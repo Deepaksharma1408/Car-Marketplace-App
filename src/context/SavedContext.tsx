@@ -20,9 +20,9 @@ interface SavedContextType {
 const SavedContext = createContext<SavedContextType | undefined>(undefined);
 
 export function SavedProvider({ children }: { children: React.ReactNode }) {
-  // Pre-populate with one item (v1 - Porsche 911 GT3 RS) so user can see it right away or unsave it
-  const [savedIds, setSavedIds] = useState<string[]>(['v1']);
-  const [likedIds, setLikedIds] = useState<string[]>(['v1', 'v4']);
+  // Pre-populate with one listing (v1) and one reel (r1) so user can see both in collection
+  const [savedIds, setSavedIds] = useState<string[]>(['v1', 'r1']);
+  const [likedIds, setLikedIds] = useState<string[]>(['v1', 'r1']);
 
   useEffect(() => {
     async function loadStorage() {
@@ -62,7 +62,7 @@ export function SavedProvider({ children }: { children: React.ReactNode }) {
   };
 
   const getLikesCount = (vehicle: Vehicle) => {
-    const defaultLiked = vehicle.id === 'v1' || vehicle.id === 'v4';
+    const defaultLiked = vehicle.id === 'v1' || vehicle.id === 'r1';
     const currentlyLiked = isLiked(vehicle.id);
     if (defaultLiked && !currentlyLiked) {
       return Math.max(0, vehicle.likesCount - 1);

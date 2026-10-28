@@ -120,7 +120,7 @@ export default function VehicleDetailScreen() {
             {vehicle.mediaUrls.map((url, idx) => (
               <ListingImage
                 key={idx}
-                source={{ uri: url }}
+                source={idx === 0 && vehicle.posterAsset ? vehicle.posterAsset : { uri: url }}
                 style={[styles.galleryImage, { width, height: galleryHeight }]}
                 contentFit="cover"
               />
@@ -149,15 +149,15 @@ export default function VehicleDetailScreen() {
           {/* Listing badge */}
           <View style={[styles.galleryBadge, { backgroundColor: 'rgba(0, 0, 0, 0.65)' }]}>
             <Ionicons
-              name="images-outline"
+              name={vehicle.mediaType === 'video' ? 'videocam' : 'images-outline'}
               size={12}
               color={colors.accent}
               style={{ marginRight: 4 }}
             />
             <Text style={styles.galleryBadgeText}>
               {vehicle.mediaType === 'video'
-                ? `4K Reel + Photo Gallery (${vehicle.mediaUrls.length} shots)`
-                : `Photo Tour (${vehicle.mediaUrls.length} shots)`}
+                ? `4K Community Reel (${vehicle.videoDuration || '0:15'})`
+                : `Verified Photo Tour (${vehicle.mediaUrls.length} shots)`}
             </Text>
           </View>
         </View>

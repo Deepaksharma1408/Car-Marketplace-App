@@ -1,15 +1,17 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, StyleSheet, Pressable, ActivityIndicator, Text } from 'react-native';
-import { useVideoPlayer, VideoView } from 'expo-video';
+import { useVideoPlayer, VideoView, type VideoSource } from 'expo-video';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { useEvent } from 'expo';
 
 interface ReelVideoPlayerProps {
-  source: any;
+  source: VideoSource;
   isActive: boolean;
   isScreenFocused: boolean;
   isAppActive: boolean;
   posterUri?: string;
+  posterSource?: any;
   isMuted: boolean;
   onToggleMute: () => void;
 }
@@ -20,36 +22,39 @@ export function ReelVideoPlayer({
   isScreenFocused,
   isAppActive,
   posterUri,
+  posterSource,
   isMuted,
 }: ReelVideoPlayerProps) {
-  const [isPlaying, setIsPlaying] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [feedbackAction, setFeedbackAction] = useState<'play' | 'pause'>('play');
-  const [hasError, setHasError] = useState(false);
-  const [isReady, setIsReady] = useState(false);
   const feedbackTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const player = useVideoPlayer(source, (p) => {
     p.loop = true;
     p.muted = isMuted;
+    p.bufferOptions = {
+      preferredForwardBufferDuration: 5,
+      maxBufferBytes: 8 * 1024 * 1024,
+      prioritizeTimeOverSizeThreshold: false,
+    };
   });
+  const { isPlaying } = useEvent(player, 'playingChange', { isPlaying: player.playing });
+  const { status } = useEvent(player, 'statusChange', { status: player.status });
+  const isReady = status === 'readyToPlay';
+  const hasError = status === 'error';
 
-  const playerRef = useRef(player);
-
-  // Sync ref and mute state
+  // Keep the same decoder when the user toggles sound.
   useEffect(() => {
-    playerRef.current = player;
-    if (playerRef.current) {
-      playerRef.current.muted = isMuted;
-    }
+    // Expo exposes mute as an imperative native property, not React state.
+    // eslint-disable-next-line react-hooks/immutability
+    player.muted = isMuted;
   }, [player, isMuted]);
 
   // Sync playback with visibility, tab focus, and app lifecycle
   const shouldPlay = isActive && isScreenFocused && isAppActive;
 
   useEffect(() => {
-    const p = playerRef.current;
-    if (!p) return;
+    const p = player;
 
     if (shouldPlay) {
       try {
@@ -64,35 +69,14 @@ export function ReelVideoPlayer({
         console.warn('Video pause error:', err);
       }
     }
-  }, [shouldPlay]);
+  }, [player, shouldPlay]);
 
-  // Player status listener
-  useEffect(() => {
-    const p = playerRef.current;
-    if (!p) return;
-
-    const statusSub = p.addListener('statusChange', (payload) => {
-      if (payload.status === 'readyToPlay') {
-        setIsReady(true);
-        setHasError(false);
-      } else if (payload.status === 'error') {
-        setHasError(true);
-      }
-    });
-
-    const playingSub = p.addListener('playingChange', (payload) => {
-      setIsPlaying(payload.isPlaying);
-    });
-
-    return () => {
-      statusSub.remove();
-      playingSub.remove();
-    };
+  useEffect(() => () => {
+    if (feedbackTimeout.current) clearTimeout(feedbackTimeout.current);
   }, []);
 
   const togglePlayback = () => {
-    const p = playerRef.current;
-    if (!p) return;
+    const p = player;
 
     if (isPlaying) {
       p.pause();
@@ -112,9 +96,9 @@ export function ReelVideoPlayer({
   return (
     <View style={StyleSheet.absoluteFill}>
       {/* Poster Image while buffering */}
-      {posterUri && !isReady && (
+      {(posterSource || posterUri) && !isReady && (
         <Image
-          source={{ uri: posterUri }}
+          source={posterSource || { uri: posterUri }}
           style={StyleSheet.absoluteFill}
           contentFit="cover"
         />

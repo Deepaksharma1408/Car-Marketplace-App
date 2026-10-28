@@ -56,6 +56,7 @@ export interface Vehicle {
   videoDuration?: string;
   isSimulatedVideo?: boolean;
   videoAsset?: any;
+  posterAsset?: any;
   description: string;
   specs: VehicleSpecs;
   tags: string[];

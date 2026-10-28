@@ -19,9 +19,12 @@ const VIEWABILITY_CONFIG = {
 
 export default function DiscoverScreen() {
   const isScreenFocused = useIsFocused();
-  const [activeTab, setActiveTab] = useState<DiscoverTab>('all');
+  const firstReelId = useMemo(() => {
+    return MOCK_VEHICLES.find((v) => v.mediaType === 'video')?.id ?? MOCK_VEHICLES[0]?.id ?? 'r1';
+  }, []);
+  const [activeTab, setActiveTab] = useState<DiscoverTab>('reels');
   const [layoutHeight, setLayoutHeight] = useState(0);
-  const [activeVehicleId, setActiveVehicleId] = useState<string>(MOCK_VEHICLES[0]?.id ?? '');
+  const [activeVehicleId, setActiveVehicleId] = useState<string>(firstReelId);
   const [isAppActive, setIsAppActive] = useState<boolean>(AppState.currentState === 'active');
   const [isMuted, setIsMuted] = useState<boolean>(true); // Start muted by default as required
 

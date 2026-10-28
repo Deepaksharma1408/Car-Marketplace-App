@@ -18,9 +18,9 @@ export function BrandHeader({ activeTab, onSelectTab, immersive = false }: Props
   const { colors } = useAppTheme();
 
   const tabs: { key: DiscoverTab; label: string }[] = [
-    { key: 'all', label: 'All Feed' },
-    { key: 'listings', label: 'For Sale' },
     { key: 'reels', label: 'Reels' },
+    { key: 'listings', label: 'For Sale' },
+    { key: 'all', label: 'All Feed' },
   ];
 
   if (immersive) {

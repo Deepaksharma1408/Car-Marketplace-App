@@ -129,7 +129,7 @@ export default function SavedScreen() {
               },
             ]}
           >
-            <ListingImage source={{ uri: item.mediaUrls[0] }} style={styles.cardThumb} contentFit="cover" onOpen={() => router.push(`/vehicle/${item.id}`)} label={`View ${item.title}`} />
+            <ListingImage source={item.posterAsset || { uri: item.mediaUrls[0] }} style={styles.cardThumb} contentFit="cover" onOpen={() => router.push(`/vehicle/${item.id}`)} label={`View ${item.title}`} />
 
             <View style={styles.cardDetails}>
               <View style={styles.badgeRow}>

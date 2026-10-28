@@ -233,7 +233,7 @@ export default function SearchScreen() {
                 <ListingImage
                   onOpen={() => router.push(`/vehicle/${item.id}`)}
                   label={`View ${item.title}`}
-                  source={{ uri: item.mediaUrls[0] }}
+                  source={item.posterAsset || { uri: item.mediaUrls[0] }}
                   style={styles.cardImage}
                   contentFit="cover"
                   transition={200}

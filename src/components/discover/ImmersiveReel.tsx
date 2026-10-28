@@ -98,15 +98,22 @@ export function ImmersiveReel({
   return (
     <View style={[styles.page, { height }]} accessibilityLabel={`Vehicle reel: ${vehicle.title}`}>
       {/* Media Layer: Real Video OR Static Photo Gallery */}
-      {isVideo ? (
+      {isVideo && isActive && isScreenFocused && isAppActive ? (
         <ReelVideoPlayer
           source={vehicle.videoAsset}
           isActive={isActive}
           isScreenFocused={isScreenFocused}
           isAppActive={isAppActive}
           posterUri={vehicle.mediaUrls[0]}
+          posterSource={vehicle.posterAsset}
           isMuted={isMuted}
           onToggleMute={onToggleMute}
+        />
+      ) : isVideo ? (
+        <Image
+          source={vehicle.posterAsset || { uri: vehicle.mediaUrls[0] }}
+          style={StyleSheet.absoluteFill}
+          contentFit="cover"
         />
       ) : (
         <View style={StyleSheet.absoluteFill}>
@@ -181,7 +188,7 @@ export function ImmersiveReel({
         {isVideo && (
           <View style={styles.mediaPill}>
             <Ionicons name="videocam" size={11} color="#FFFFFF" style={{ marginRight: 3 }} />
-            <Text style={styles.mediaPillText}>4K VIDEO</Text>
+            <Text style={styles.mediaPillText}>VIDEO</Text>
           </View>
         )}
       </View>
