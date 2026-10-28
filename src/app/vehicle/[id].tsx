@@ -14,7 +14,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MOCK_VEHICLES } from '@/data/mockVehicles';
+import { useVehicles } from '@/context/VehicleContext';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useSaved } from '@/context/SavedContext';
 import { Spacing, Radius } from '@/constants/theme';
@@ -22,6 +22,7 @@ import { Spacing, Radius } from '@/constants/theme';
 
 
 export default function VehicleDetailScreen() {
+  const { vehicles: MOCK_VEHICLES } = useVehicles();
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();

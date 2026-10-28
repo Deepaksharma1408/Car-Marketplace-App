@@ -9,20 +9,18 @@ import {
   ViewToken,
 } from 'react-native';
 import { useIsFocused } from 'expo-router';
-import { BrandHeader, DiscoverTab } from '@/components/ui/BrandHeader';
+import { BrandHeader } from '@/components/ui/BrandHeader';
 import { ImmersiveReel } from '@/components/discover/ImmersiveReel';
-import { MOCK_VEHICLES } from '@/data/mockVehicles';
+import { useVehicles } from '@/context/VehicleContext';
 
 const VIEWABILITY_CONFIG = {
   itemVisiblePercentThreshold: 60,
 };
 
 export default function DiscoverScreen() {
+  const { vehicles } = useVehicles();
   const isScreenFocused = useIsFocused();
-  const firstReelId = useMemo(() => {
-    return MOCK_VEHICLES.find((v) => v.mediaType === 'video')?.id ?? MOCK_VEHICLES[0]?.id ?? 'r1';
-  }, []);
-  const [activeTab, setActiveTab] = useState<DiscoverTab>('reels');
+  const firstReelId = vehicles.find(v => v.mediaType === 'video')?.id ?? 'r1';
   const [layoutHeight, setLayoutHeight] = useState(0);
   const [activeVehicleId, setActiveVehicleId] = useState<string>(firstReelId);
   const [isAppActive, setIsAppActive] = useState<boolean>(AppState.currentState === 'active');
@@ -38,31 +36,11 @@ export default function DiscoverScreen() {
     };
   }, []);
 
-  const selectTab = useCallback((tab: DiscoverTab) => {
-    setActiveTab(tab);
-    const nextList = MOCK_VEHICLES.filter((v) => {
-      if (tab === 'all') return true;
-      if (tab === 'listings') return v.listingType === 'listing';
-      if (tab === 'reels') return v.mediaType === 'video';
-      return true;
-    });
-    if (nextList.length > 0) {
-      setActiveVehicleId(nextList[0].id);
-    }
-  }, []);
-
   const toggleMute = useCallback(() => {
     setIsMuted((prev) => !prev);
   }, []);
 
-  const filteredVehicles = useMemo(() => {
-    return MOCK_VEHICLES.filter((v) => {
-      if (activeTab === 'all') return true;
-      if (activeTab === 'listings') return v.listingType === 'listing';
-      if (activeTab === 'reels') return v.mediaType === 'video';
-      return true;
-    });
-  }, [activeTab]);
+  const filteredVehicles = useMemo(() => vehicles.filter(v => v.mediaType === 'video'), [vehicles]);
 
   // Viewable item tracking for single active playing video
   const onViewableItemsChanged = useCallback(
@@ -93,7 +71,7 @@ export default function DiscoverScreen() {
       >
         {layoutHeight > 0 && (
           <FlatList
-            key={`feed-${activeTab}-${layoutHeight}`}
+            key={`feed-${layoutHeight}`}
             data={filteredVehicles}
             keyExtractor={(item) => item.id}
             pagingEnabled
@@ -129,7 +107,7 @@ export default function DiscoverScreen() {
       </View>
 
       {/* Floating Brand & Filter Header (Rendered on top of viewport) */}
-      <BrandHeader activeTab={activeTab} onSelectTab={selectTab} immersive />
+      <BrandHeader immersive />
     </View>
   );
 }

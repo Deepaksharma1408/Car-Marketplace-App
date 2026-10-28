@@ -66,6 +66,9 @@ export interface Vehicle {
   seller: Seller;
   createdAt: string;
   sampleComments?: Comment[];
+  localPost?: boolean;
+  clipUris?: string[];
+  templateName?: string;
 }
 
 export interface SearchFilters {

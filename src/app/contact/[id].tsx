@@ -5,12 +5,13 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/context/ThemeContext';
-import { MOCK_VEHICLES } from '@/data/mockVehicles';
+import { useVehicles } from '@/context/VehicleContext';
 import { MarketButton, SellerIdentity, marketStyles } from '@/components/marketplace/MarketplaceUI';
 
 type Message = { id: string; text: string; from: 'me' | 'seller' };
 
 export default function ContactRoute() {
+  const { vehicles: MOCK_VEHICLES } = useVehicles();
   const { id } = useLocalSearchParams<{ id: string }>();
   const vehicle = MOCK_VEHICLES.find(v => v.id === id);
   const { colors } = useAppTheme();
@@ -19,6 +20,7 @@ export default function ContactRoute() {
 }
 
 function SellerContact({ vehicleId }: { vehicleId: string }) {
+  const { vehicles: MOCK_VEHICLES } = useVehicles();
   const vehicle = MOCK_VEHICLES.find(v => v.id === vehicleId)!;
   const { colors, isDark } = useAppTheme();
   const insets = useSafeAreaInsets();

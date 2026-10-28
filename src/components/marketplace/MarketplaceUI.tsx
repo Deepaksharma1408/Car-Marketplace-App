@@ -2,32 +2,35 @@ import React, { type PropsWithChildren } from 'react';
 import { Pressable, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, usePathname, useIsFocused } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/context/ThemeContext';
 import { Seller, Vehicle } from '@/types';
 
-export function MarketplacePage({ title, children }: PropsWithChildren<{ title: string }>) {
+export function MarketplacePage({ title, children, showBack = true, scrollKey }: PropsWithChildren<{ title: string; showBack?: boolean; scrollKey?: string | number }>) {
   const { colors, isDark } = useAppTheme();
+  const focused = useIsFocused();
   const insets = useSafeAreaInsets();
   return <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: insets.top, paddingLeft: insets.left, paddingRight: insets.right }}>
-    <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+    {focused && <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />}
     <View style={[marketStyles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-      <Pressable accessibilityRole="button" accessibilityLabel="Back" onPress={() => router.canGoBack() ? router.back() : router.replace('/')} style={marketStyles.back}>
+      {showBack && <Pressable accessibilityRole="button" accessibilityLabel="Back" onPress={() => router.canGoBack() ? router.back() : router.replace('/')} style={marketStyles.back}>
         <Ionicons name="arrow-back" size={24} color={colors.link} />
-      </Pressable><Text style={[marketStyles.heading, { color: colors.text, flex: 1 }]}>{title}</Text>
+      </Pressable>}<Text style={[marketStyles.heading, { color: colors.text, flex: 1 }]}>{title}</Text>
     </View>
-    <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[marketStyles.content, { paddingBottom: insets.bottom + 24 }]}>{children}</ScrollView>
+    <ScrollView key={scrollKey} keyboardShouldPersistTaps="handled" contentContainerStyle={[marketStyles.content, { paddingBottom: insets.bottom + 24 }]}>{children}</ScrollView>
   </View>;
 }
 
 export function SellerIdentity({ seller }: { seller: Seller }) {
   const { colors } = useAppTheme();
-  return <Pressable accessibilityRole="button" accessibilityLabel={`Open seller profile for ${seller.name}`} onPress={() => router.push({ pathname: '/seller/[id]', params: { id: seller.id } })} style={marketStyles.identity}>
+  const currentPath = usePathname();
+  const isCurrentSeller = currentPath === `/seller/${seller.id}`;
+  return <Pressable disabled={isCurrentSeller} accessibilityRole={isCurrentSeller ? undefined : "button"} accessibilityLabel={isCurrentSeller ? seller.name : `Open seller profile for ${seller.name}`} onPress={() => router.navigate({ pathname: '/seller/[id]', params: { id: seller.id } })} style={marketStyles.identity}>
     <Image source={{ uri: seller.avatar }} style={marketStyles.avatar} contentFit="cover" />
     <View style={{ flex: 1, gap: 3 }}><Text style={{ color: colors.text, fontWeight: '700' }}>{seller.name} {seller.verified ? '✓' : ''}</Text>
       <Text style={{ color: colors.link }}>@{seller.handle}</Text><Text style={{ color: colors.textSecondary }}>{seller.location}</Text></View>
-    <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+    {!isCurrentSeller && <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />}
   </Pressable>;
 }
 
@@ -45,7 +48,7 @@ export function MarketplaceCard({ vehicle }: { vehicle: Vehicle }) {
     <Pressable accessibilityRole="button" accessibilityLabel={`View details of ${vehicle.title}`} onPress={() => router.push({ pathname: '/vehicle/[id]', params: { id: vehicle.id } })}>
       <Image source={vehicle.posterAsset || { uri: vehicle.mediaUrls[0] }} style={marketStyles.carImage} contentFit="cover" />
       <View style={{ padding: 16, gap: 8 }}>
-        <Text style={{ color: colors.link, fontSize: 11, fontWeight: '700' }}>{forSale ? 'FOR SALE · SAMPLE LISTING' : 'REEL · SAMPLE CONTENT'}</Text>
+        <Text style={{ color: colors.link, fontSize: 11, fontWeight: '700' }}>{vehicle.localPost ? (forSale ? 'FOR SALE · LOCAL LISTING' : 'LOCAL VEHICLE VIDEO') : forSale ? 'FOR SALE · SAMPLE LISTING' : 'REEL · SAMPLE CONTENT'}</Text>
         <Text style={[marketStyles.heading, { color: colors.text }]}>{vehicle.title}</Text>
         {forSale && vehicle.priceAED != null && <Text style={{ color: colors.link, fontSize: 22, fontWeight: '800' }}>AED {vehicle.priceAED.toLocaleString()}</Text>}
         <Text style={{ color: colors.textSecondary }}>{vehicle.year} · {vehicle.mileageKm != null ? `${vehicle.mileageKm.toLocaleString()} km · ` : ''}{vehicle.specs.regionalSpecs}</Text>

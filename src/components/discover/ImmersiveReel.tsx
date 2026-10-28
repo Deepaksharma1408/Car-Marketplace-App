@@ -17,7 +17,7 @@ import { useAppTheme } from '@/context/ThemeContext';
 import { useSaved } from '@/context/SavedContext';
 import { Vehicle } from '@/types';
 import { CommentsSheet } from './CommentsSheet';
-import { ReelVideoPlayer } from './ReelVideoPlayer';
+import { VideoSequence } from './VideoSequence';
 
 interface ImmersiveReelProps {
   vehicle: Vehicle;
@@ -99,13 +99,11 @@ export function ImmersiveReel({
     <View style={[styles.page, { height }]} accessibilityLabel={`Vehicle reel: ${vehicle.title}`}>
       {/* Media Layer: Real Video OR Static Photo Gallery */}
       {isVideo && isActive && isScreenFocused && isAppActive ? (
-        <ReelVideoPlayer
-          source={vehicle.videoAsset}
+        <VideoSequence
+          vehicle={vehicle}
           isActive={isActive}
           isScreenFocused={isScreenFocused}
           isAppActive={isAppActive}
-          posterUri={vehicle.mediaUrls[0]}
-          posterSource={vehicle.posterAsset}
           isMuted={isMuted}
           onToggleMute={onToggleMute}
         />

@@ -3,7 +3,7 @@ import { View, StyleSheet, Pressable, ActivityIndicator, Text } from 'react-nati
 import { useVideoPlayer, VideoView, type VideoSource } from 'expo-video';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { useEvent } from 'expo';
+import { useEvent, useEventListener } from 'expo';
 
 interface ReelVideoPlayerProps {
   source: VideoSource;
@@ -14,6 +14,7 @@ interface ReelVideoPlayerProps {
   posterSource?: any;
   isMuted: boolean;
   onToggleMute: () => void;
+  onEnd?: () => void;
 }
 
 export function ReelVideoPlayer({
@@ -24,13 +25,14 @@ export function ReelVideoPlayer({
   posterUri,
   posterSource,
   isMuted,
+  onEnd,
 }: ReelVideoPlayerProps) {
   const [showFeedback, setShowFeedback] = useState(false);
   const [feedbackAction, setFeedbackAction] = useState<'play' | 'pause'>('play');
   const feedbackTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const player = useVideoPlayer(source, (p) => {
-    p.loop = true;
+    p.loop = !onEnd;
     p.muted = isMuted;
     p.bufferOptions = {
       preferredForwardBufferDuration: 5,
@@ -39,6 +41,7 @@ export function ReelVideoPlayer({
     };
   });
   const { isPlaying } = useEvent(player, 'playingChange', { isPlaying: player.playing });
+  useEventListener(player, 'playToEnd', () => onEnd?.());
   const { status } = useEvent(player, 'statusChange', { status: player.status });
   const isReady = status === 'readyToPlay';
   const hasError = status === 'error';

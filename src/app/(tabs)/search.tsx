@@ -14,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MOCK_VEHICLES } from '@/data/mockVehicles';
+import { useVehicles } from '@/context/VehicleContext';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useSaved } from '@/context/SavedContext';
 import { SearchFilters } from '@/types';
@@ -24,6 +24,7 @@ import { Spacing, Radius } from '@/constants/theme';
 const CATEGORIES = ['All', 'Supercars', 'Luxury SUV', 'Off-Road', 'Electric', 'Under 500K'];
 
 export default function SearchScreen() {
+  const { vehicles: MOCK_VEHICLES } = useVehicles();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useAppTheme();
   const { isSaved, toggleSave } = useSaved();
@@ -106,7 +107,7 @@ export default function SearchScreen() {
 
       return true;
     });
-  }, [query, selectedCategory, filters]);
+  }, [query, selectedCategory, filters, MOCK_VEHICLES]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>

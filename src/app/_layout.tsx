@@ -4,6 +4,8 @@ import * as SplashScreen from 'expo-splash-screen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider, useAppTheme } from '@/context/ThemeContext';
 import { SavedProvider } from '@/context/SavedContext';
+import { AuthProvider } from '@/context/AuthContext';
+import { VehicleProvider } from '@/context/VehicleContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -67,9 +69,9 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
-      <SavedProvider>
+      <AuthProvider><VehicleProvider><SavedProvider>
         <RootNavigator />
-      </SavedProvider>
+      </SavedProvider></VehicleProvider></AuthProvider>
     </ThemeProvider>
     </SafeAreaProvider>
   );

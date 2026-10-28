@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Vehicle } from '@/types';
-import { MOCK_VEHICLES } from '@/data/mockVehicles';
+import { useVehicles } from '@/context/VehicleContext';
 
 const SAVED_STORAGE_KEY = '@vehiclespot_saved_ids';
 const LIKED_STORAGE_KEY = '@vehiclespot_liked_ids';
@@ -20,6 +20,7 @@ interface SavedContextType {
 const SavedContext = createContext<SavedContextType | undefined>(undefined);
 
 export function SavedProvider({ children }: { children: React.ReactNode }) {
+  const { vehicles: MOCK_VEHICLES } = useVehicles();
   // Pre-populate with one listing (v1) and one reel (r1) so user can see both in collection
   const [savedIds, setSavedIds] = useState<string[]>(['v1', 'r1']);
   const [likedIds, setLikedIds] = useState<string[]>(['v1', 'r1']);
