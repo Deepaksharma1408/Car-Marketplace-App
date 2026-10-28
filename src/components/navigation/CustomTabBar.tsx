@@ -9,7 +9,7 @@ type BottomTabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tab
 
 const tabs = {
   index: { label: 'Discover', icon: 'compass-outline', active: 'compass' },
-  search: { label: 'Search', icon: 'search-outline', active: 'search' },
+  listings: { label: 'Car Listings', icon: 'car-sport-outline', active: 'car-sport' },
   create: { label: 'Create', icon: 'add-circle-outline', active: 'add-circle' },
   saved: { label: 'Saved', icon: 'bookmark-outline', active: 'bookmark' },
   profile: { label: 'Profile', icon: 'person-outline', active: 'person' },

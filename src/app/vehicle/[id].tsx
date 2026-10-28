@@ -1,5 +1,4 @@
 import { ListingImage } from '@/components/ui/ListingImage';
-import { useBrandDialog } from '@/components/ui/BrandDialog';
 import { TouchableOpacity } from '@/components/ui/Touchable';
 import React, { useState } from 'react';
 import {
@@ -25,7 +24,6 @@ import { Spacing, Radius } from '@/constants/theme';
 export default function VehicleDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
-  const { showDialog, dialog } = useBrandDialog();
   const { width: windowWidth } = useWindowDimensions();
   const width = Math.min(windowWidth - insets.left - insets.right, 800);
   const galleryHeight = Math.min(width * 0.8, 440);
@@ -50,16 +48,6 @@ export default function VehicleDetailScreen() {
     }
   };
 
-  const handleContactAction = (type: 'whatsapp' | 'call') => {
-    if (!forSale) return;
-    showDialog(
-      `${type === 'whatsapp' ? 'WhatsApp' : 'Call'} Inquiry`,
-      `Inquiry for ${vehicle.title} with seller ${vehicle.seller.name}. Contact details: ${
-        type === 'whatsapp' ? vehicle.seller.whatsapp : vehicle.seller.phone
-      }`,
-      [{ text: 'Close', style: 'cancel' }]
-    );
-  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingLeft: insets.left, paddingRight: insets.right }]}>
@@ -156,7 +144,7 @@ export default function VehicleDetailScreen() {
             />
             <Text style={styles.galleryBadgeText}>
               {vehicle.mediaType === 'video'
-                ? `4K Community Reel (${vehicle.videoDuration || '0:15'})`
+                ? `Reel preview (${vehicle.videoDuration || '0:15'})`
                 : `Verified Photo Tour (${vehicle.mediaUrls.length} shots)`}
             </Text>
           </View>
@@ -285,45 +273,18 @@ export default function VehicleDetailScreen() {
         </View>
       </ScrollView>
 
-      {/* Sale listings only: social posts never expose seller contact actions. */}
-      {forSale && <View
-        style={[
-          styles.bottomStickyBar,
-          {
-            paddingBottom: Math.max(insets.bottom, 14),
-            backgroundColor: colors.surface,
-            borderTopColor: colors.border,
-          },
-        ]}
-      >
-        <TouchableOpacity
+      <View style={[styles.bottomStickyBar, { paddingBottom: Math.max(insets.bottom, 14), backgroundColor: colors.surface, borderTopColor: colors.border }]}>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="View seller profile"
           style={[styles.actionButtonOutline, { borderColor: colors.accent }]}
-          onPress={() => handleContactAction('call')}
-          accessibilityRole="button"
-          accessibilityLabel="Call seller"
-        >
-          <Ionicons name="call-outline" size={18} color={colors.accent} style={{ marginRight: 6 }} />
-          <Text style={[styles.actionButtonOutlineText, { color: colors.link }]}>Call</Text>
+          onPress={() => router.push({ pathname: '/seller/[id]', params: { id: vehicle.seller.id } })}>
+          <Text style={[styles.actionButtonOutlineText, { color: colors.link }]}>Seller Profile</Text>
         </TouchableOpacity>
-
-        <TouchableOpacity
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Contact Seller"
           style={[styles.actionButtonFilled, { backgroundColor: colors.action }]}
-          onPress={() => handleContactAction('whatsapp')}
-          accessibilityRole="button"
-          accessibilityLabel="Chat on WhatsApp"
-        >
-          <Ionicons
-            name="logo-whatsapp"
-            size={20}
-            color={colors.onAccent}
-            style={{ marginRight: 8 }}
-          />
-          <Text style={[styles.actionButtonFilledText, { color: colors.onAccent }]}>
-            WhatsApp Inquiry
-          </Text>
+          onPress={() => router.push({ pathname: '/contact/[id]', params: { id: vehicle.id } })}>
+          <Text style={[styles.actionButtonFilledText, { color: colors.onAccent }]}>Contact Seller</Text>
         </TouchableOpacity>
-      </View>}
-      {dialog}
+      </View>
     </View>
   );
 }

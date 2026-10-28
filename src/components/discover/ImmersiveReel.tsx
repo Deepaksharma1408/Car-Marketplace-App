@@ -164,35 +164,6 @@ export function ImmersiveReel({
         style={[styles.bottomScrim, { height: Math.min(height * 0.58, 420) }]}
       />
 
-      {/* Top Status Tags */}
-      <View style={[styles.topMetaRow, { top: insets.top + 68 }]}>
-        <View
-          style={[
-            styles.typeBadge,
-            {
-              backgroundColor: forSale ? 'rgba(0, 137, 200, 0.9)' : 'rgba(196, 155, 85, 0.9)',
-            },
-          ]}
-        >
-          <Ionicons
-            name={forSale ? 'car-sport' : 'sparkles'}
-            size={12}
-            color="#FFFFFF"
-            style={{ marginRight: 4 }}
-          />
-          <Text style={styles.typeBadgeText}>
-            {forSale ? 'CURATED LISTING' : 'COMMUNITY REEL'}
-          </Text>
-        </View>
-
-        {isVideo && (
-          <View style={styles.mediaPill}>
-            <Ionicons name="videocam" size={11} color="#FFFFFF" style={{ marginRight: 3 }} />
-            <Text style={styles.mediaPillText}>VIDEO</Text>
-          </View>
-        )}
-      </View>
-
       {/* Floating Action Rail (Right side) */}
       <View style={[styles.actionRail, { bottom: Math.max(insets.bottom, 12) + 16, gap: compact ? 8 : 12 }]}>
         {/* Sound toggle for video reels */}
@@ -248,7 +219,7 @@ export function ImmersiveReel({
       <View style={[styles.bottomInfo, { bottom: Math.max(insets.bottom, 12) + 14 }]}>
         {/* Seller / Creator Identification */}
         <Pressable
-          onPress={forSale ? openDetails : undefined}
+          onPress={() => router.push({ pathname: '/seller/[id]', params: { id: vehicle.seller.id } })}
           accessibilityLabel={`Seller profile: ${vehicle.seller.name}`}
           style={styles.sellerRow}
         >
@@ -273,7 +244,7 @@ export function ImmersiveReel({
         </Pressable>
 
         {/* Vehicle Title */}
-        <Pressable onPress={forSale ? openDetails : undefined}>
+        <Pressable accessibilityRole="button" accessibilityLabel={`View details of ${vehicle.title}`} onPress={openDetails}>
           <Text style={styles.vehicleTitle} numberOfLines={expanded ? undefined : 2}>
             {vehicle.title}
           </Text>
@@ -322,35 +293,13 @@ export function ImmersiveReel({
           </View>
         </View>
 
-        {/* Primary Action Button */}
-        {forSale ? (
-          <Pressable
-            onPress={openDetails}
-            accessibilityRole="button"
-            accessibilityLabel={`View full details for ${vehicle.title}`}
-            style={({ pressed }) => [
-              styles.ctaButton,
-              { backgroundColor: pressed ? colors.accentHover : colors.action },
-            ]}
-          >
-            <Text style={styles.ctaButtonText}>View Car Details</Text>
-            <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
-          </Pressable>
-        ) : (
-          <Pressable
-            onPress={() => setCommentsOpen(true)}
-            accessibilityRole="button"
-            accessibilityLabel="Join discussion for community reel"
-            style={({ pressed }) => [
-              styles.ctaButton,
-              styles.ctaDiscussion,
-              { backgroundColor: pressed ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.16)' },
-            ]}
-          >
-            <Ionicons name="chatbubble-ellipses-outline" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
-            <Text style={styles.ctaButtonText}>Join Discussion ({vehicle.commentsCount})</Text>
-          </Pressable>
-        )}
+        {/* Seller enquiry for listings and reels */}
+        <Pressable onPress={() => router.push({ pathname: '/contact/[id]', params: { id: vehicle.id } })}
+          accessibilityRole="button" accessibilityLabel="Contact Seller"
+          style={({ pressed }) => [styles.ctaButton, { backgroundColor: pressed ? colors.accentHover : colors.action }]}>
+          <Ionicons name="chatbubble-ellipses-outline" size={16} color="#FFFFFF" />
+          <Text style={styles.ctaButtonText}>Contact Seller</Text>
+        </Pressable>
       </View>
 
       {/* Interactive Comments Sheet */}
